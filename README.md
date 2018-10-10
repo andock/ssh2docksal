@@ -1,5 +1,5 @@
 # ssh2docksal
-:wrench: SSH server to access docksal container
+:wrench: SSH server to user based docksal container access
 
 > SSH chroot with steroids
 
@@ -128,4 +128,4 @@ Here is an example about how to use ssh2docksal inside Docker
 $ docker run --privileged -v /var/lib/docker:/var/lib/docker -it --rm -p 2222:2222 andock/ssh2docksal
 ```
 
-## Forked and based on https://github.com/moul/ssh2docker
+## Initialized fored and massiv inspired by  https://github.com/moul/ssh2docker
