@@ -1,7 +1,0 @@
-#!/bin/sh
-
-echo "password-auth-script: $@" >&2
-
-sleep 2
-
-echo '{"allowed":true}'
