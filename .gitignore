@@ -33,3 +33,4 @@ profile.out
 
 .docker-container-built
 dist/
+.idea
