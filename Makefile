@@ -12,7 +12,7 @@ REL_COMMANDS := $(subst $(GODIR),./,$(COMMANDS))
 REL_PACKAGES := $(subst $(GODIR),./,$(PACKAGES))
 GOENV ?=	GO15VENDOREXPERIMENT=1
 GO ?=		$(GOENV) go
-USER ?=		$(shell whoami)
+USER ?=		andockio
 
 
 all:	build
@@ -28,6 +28,7 @@ build:	$(BINARIES)
 
 
 $(BINARIES):	$(SOURCES)
+	dep ensure
 	$(GO) build -o $@ .
 
 
