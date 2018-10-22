@@ -75,7 +75,7 @@ profile.out:	$(SOURCES)
 
 
 docker:
-	docker build -t andock/ssh2docksal .
+	docker build -t andockio/ssh2docksal .
 
 
 .PHONY: docker-build

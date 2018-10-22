@@ -1,9 +1,0 @@
-package: github.com/andock/ssh2docksal
-import:
-- package: github.com/gliderlabs/ssh
-  version: ^0.1.1
-- package: github.com/anmitsu/go-shlex
-- package: github.com/apex/log
-  version: ^1.1.0
-- package: github.com/kr/pty
-  version: ^1.1.3
