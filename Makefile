@@ -28,7 +28,7 @@ build:	$(BINARIES)
 
 
 $(BINARIES):	$(SOURCES)
-	$(GO) build -o $@ ./cmd/$@
+	$(GO) build -o $@ .
 
 
 .PHONY: test
