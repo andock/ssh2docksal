@@ -17,6 +17,6 @@ before_install:
 script:
 - make build
 - make test
-- go run ./cmd/gotty-client/main.go --help || true
-- make cover
-- goveralls -service=travis-ci -v -covermode=count -coverprofile=profile.out
+#- go run ./cmd/gotty-client/main.go --help || true
+#- make cover
+#- goveralls -service=travis-ci -v -covermode=count -coverprofile=profile.out
