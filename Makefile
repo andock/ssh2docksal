@@ -29,6 +29,7 @@ build:	$(BINARIES)
 
 $(BINARIES):	$(SOURCES)
 	dep ensure
+	golint
 	$(GO) build -o $@ .
 
 
@@ -77,20 +78,7 @@ profile.out:	$(SOURCES)
 
 docker:
 	docker build -t andockio/ssh2docksal .
-
-
-.PHONY: docker-build
-docker-build:
-	go get github.com/laher/goxc
-	rm -rf contrib/docker/linux_386
-	for binary in $(BINARIES); do                                             \
-	  goxc -bc="linux,386" -d . -pv contrib/docker -n $$binary xc;            \
-	  mv contrib/docker/linux_386/$$binary contrib/docker/entrypoint;         \
-	  docker build -t $(USER)/$$binary contrib/docker;                        \
-	  docker run -it --rm $(USER)/$$binary || true;                           \
-	  docker inspect --type=image --format="{{ .Id }}" moul/$$binary || true; \
-	  echo "Now you can run 'docker push $(USER)/$$binary'";                  \
-	done
+                      \
 
 
 .PHONY: docker-ps

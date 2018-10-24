@@ -13,7 +13,7 @@ before_install:
 - go get -u github.com/mattn/goveralls
 - go get golang.org/x/tools/cmd/cover
 - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-
+- go get -u golang.org/x/lint/golint
 script:
 - make build
 - make test

@@ -18,6 +18,14 @@
   version = "v1.1.0"
 
 [[projects]]
+  digest = "1:b24d38b282bacf9791408a080f606370efa3d364e4b5fd9ba0f7b87786d3b679"
+  name = "github.com/codegangsta/cli"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "cfb38830724cc34fedffe9a2a29fb54fa9169cd1"
+  version = "v1.20.0"
+
+[[projects]]
   digest = "1:74d60c90a8daf329b92887e404a23d999ff95bc7a9c111476c1753bcf178e384"
   name = "github.com/gliderlabs/ssh"
   packages = ["."]
@@ -62,6 +70,7 @@
   analyzer-version = 1
   input-imports = [
     "github.com/apex/log",
+    "github.com/codegangsta/cli",
     "github.com/gliderlabs/ssh",
     "github.com/kr/pty",
   ]
