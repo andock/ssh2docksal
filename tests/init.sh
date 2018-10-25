@@ -3,6 +3,9 @@
 # Test init script for travis.
 # Installs docksal and setup two docksal environments.
 
+set -e
+pwd
+cd tests
 # Install docksal
 curl -fsSL get.docksal.io | bash
 
