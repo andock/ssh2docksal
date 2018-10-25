@@ -30,7 +30,7 @@ build:	$(BINARIES)
 $(BINARIES):	$(SOURCES)
 	dep ensure
 	golint
-	$(GO) build -o $@ .
+	$(GO) build -o $@ main/main.go
 
 
 .PHONY: test
