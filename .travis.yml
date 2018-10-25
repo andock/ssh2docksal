@@ -16,7 +16,12 @@ before_install:
 - go get -u golang.org/x/lint/golint
 script:
 - make build
+- make docker
 - make test
+- cd tests
+- ./init.sh
+- bats simple.bats
+
 #- go run ./cmd/gotty-client/main.go --help || true
 #- make cover
 #- goveralls -service=travis-ci -v -covermode=count -coverprofile=profile.out

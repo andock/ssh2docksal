@@ -78,7 +78,7 @@ profile.out:	$(SOURCES)
 
 docker:
 	docker build -t andockio/ssh2docksal .
-                      \
+                          \
 
 
 .PHONY: docker-ps
