@@ -5,7 +5,6 @@
 
 set -e
 pwd
-cd tests
 # Install docksal
 curl -fsSL get.docksal.io | bash
 
@@ -17,6 +16,7 @@ cp -R ssh2docksal_source ssh2docksal_target
 cd ssh2docksal_target
 fin init 
 
+cd ..
 # Setup drush aliases
 cp ssh2docksal.aliases.drushrc.php ssh2docksal_source/drush/
 
