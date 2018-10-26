@@ -9,7 +9,7 @@ pwd
 curl -fsSL get.docksal.io | bash
 
 # Clone test repositories
-git clone git@github.com:docksal/drupal8.git ssh2docksal_source
+git clone https://github.com/docksal/drupal8.git ssh2docksal_source
 cp -R ssh2docksal_source ssh2docksal_target
 
 # Initialize docksal projects
