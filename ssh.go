@@ -52,7 +52,6 @@ func executeCommand(name string, args []string, s ssh.Session, isScp bool) {
 
 	if (!isScp) {
 		cmd.Stdout = s
-		cmd.Stdin = s
 		cmd.Stderr = s
 	}
 	if (isScp) {
@@ -80,9 +79,6 @@ func executeCommand(name string, args []string, s ssh.Session, isScp bool) {
 		}()
 	}
 	cmd.Run()
-	if (!isScp) {
-		s.Exit(0)
-	}
 	log.Infof("Run done")
 }
 // SSHHandler handles the ssh connection
@@ -107,12 +103,14 @@ func SSHHandler() {
 		buf, err := find.CombinedOutput()
 		if err != nil {
 			log.Warnf("docker ps ... failed: %v", err)
+			s.Exit(1)
 			return
 		}
 		existingContainer = strings.TrimSpace(string(buf))
 
 		if existingContainer == "" {
 			log.Warnf("CLI Container: %s_cli_1 not found", s.User())
+			s.Exit(1)
 			return
 		}
 		// Opening Docker process
@@ -139,7 +137,7 @@ func SSHHandler() {
 			if len(command) != 0 {
 				args = append(args, "-lc")
 				args = append(args, strings.Join(command, " "))
-				isScp = (command[0] == "rsync");
+				isScp = (command[0] == "rsync" || command[0] == "scp");
 			}
 			joinedArgs = strings.Join(args, " ")
 			log.Infof("Executing 'docker %s'", joinedArgs)
