@@ -26,9 +26,6 @@ _testmain.go
 *.test
 *.prof
 
-host_rsa*
-id_rsa*
-
 profile.out
 
 .docker-container-built
