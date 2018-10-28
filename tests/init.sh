@@ -28,6 +28,7 @@ cp -R ssh2docksal_source ssh2docksal_target
 
 cd ssh2docksal_source
 fin init
+fin ssh-add
 cd ..
 
 cd ssh2docksal_target
@@ -41,9 +42,3 @@ cp ssh2docksal.aliases.drushrc.php ssh2docksal_source/drush/
 #  ==================  Start ssh2docksal docker image ==============================
 ./startup.sh
 
-cd ssh2docksal_source/docroot
-fin ssh-add id_rsa
-fin drush @ssh2docksal.target sa
-
-cd ..
-cd ..
