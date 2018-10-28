@@ -22,6 +22,7 @@ script:
 - ./init.sh
 - ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ssh2docksal_target@192.168.64.100 -p 2222 ls
 - bats simple.bats
+- bats drush.bats
 
 #- go run ./cmd/gotty-client/main.go --help || true
 #- make cover

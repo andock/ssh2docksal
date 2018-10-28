@@ -13,10 +13,13 @@ import (
 	"syscall"
 	"unsafe"
 )
+var findExecCommand = exec.Command
+
 func setWinsize(f *os.File, w, h int) {
 	syscall.Syscall(syscall.SYS_IOCTL, f.Fd(), uintptr(syscall.TIOCSWINSZ),
 		uintptr(unsafe.Pointer(&struct{ h, w, x, y uint16 }{uint16(h), uint16(w), 0, 0})))
 }
+
 func executePtyCommand(name string, args []string, s ssh.Session) {
 	ptyReq, winCh, _ := s.Pty()
 	cmd := exec.Command(name, args...)
@@ -81,38 +84,56 @@ func executeCommand(name string, args []string, s ssh.Session, isScp bool) {
 	cmd.Run()
 	log.Infof("Run done")
 }
+
+func getContainerID(username string) (string, error) {
+
+	var err error
+	existingContainer := ""
+	var container string
+	s := strings.Split(username,"--")
+	projectName := s[0]
+
+	if len(s) == 2 {
+		container = s[1]
+	} else if (len(s) == 1){
+		container = "cli"
+	}
+
+	containerName := projectName+"_"+container +"_1"
+	findExecResult := findExecCommand("docker", "ps", fmt.Sprintf("--filter=name=%s", containerName), "--quiet", "--no-trunc")
+
+	buf, err := findExecResult.CombinedOutput()
+	if err != nil {
+		log.Warnf("docker ps ... failed: %v", err)
+		return "", err
+	}
+	existingContainer = strings.TrimSpace(string(buf))
+
+	if existingContainer == "" {
+		log.Warnf("Container: %s not found", containerName)
+		return "", fmt.Errorf("container %s not found", containerName)
+	}
+	return existingContainer, nil
+}
+
 // SSHHandler handles the ssh connection
 func SSHHandler() {
 	ssh.Handle(func(s ssh.Session) {
-		//io.WriteString(s, "authorizedKey")
-		//authorizedKey := gossh.MarshalAuthorizedKey(s.PublicKey())
+
 		log.Infof("Starting")
 
-		var find *exec.Cmd
-		var err error
 		var entrypoint = "/bin/bash"
 		var command []string
 		var joinedArgs string
 
 		command = s.Command()
-		// checking if a container already exists for this user
-		existingContainer := ""
+		existingContainer, err := getContainerID(s.User())
 
-		find = exec.Command("docker", "ps", fmt.Sprintf("--filter=name=%s_cli_1", s.User()), "--quiet", "--no-trunc")
-
-		buf, err := find.CombinedOutput()
-		if err != nil {
-			log.Warnf("docker ps ... failed: %v", err)
+		if (err != nil) {
 			s.Exit(1)
 			return
 		}
-		existingContainer = strings.TrimSpace(string(buf))
 
-		if existingContainer == "" {
-			log.Warnf("CLI Container: %s_cli_1 not found", s.User())
-			s.Exit(1)
-			return
-		}
 		// Opening Docker process
 		if existingContainer != "" {
 			var isPty bool
