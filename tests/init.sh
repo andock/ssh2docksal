@@ -42,7 +42,7 @@ cp ssh2docksal.aliases.drushrc.php ssh2docksal_source/drush/
 ./startup.sh
 
 cd ssh2docksal_source/docroot
-fin ssh-add ~/.ssh/id_rsa
+fin ssh-add id_rsa
 fin drush @ssh2docksal.target sa
 
 cd ..
