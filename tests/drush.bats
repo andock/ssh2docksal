@@ -15,7 +15,7 @@
   cd ssh2docksal_source/docroot
   run fin drush sql-drop -y
   [ $status = 0 ]
-  run fin drush sql-sync -y @ssh2docksal.target @self
+  run fin drush sql-sync @ssh2docksal.target @self -y
   [ $status = 0 ]
   run 'curl -sL -I  http://ssh2docksal-source.docksal | grep "HTTP/1.1 200 OK"'
   [[ "$output" =~ "HTTP/1.1 200 OK" ]]

@@ -22,6 +22,7 @@ docker run \
 -d \
 -v /var/run/docker.sock:/var/run/docker.sock \
 -v /usr/bin/docker:/usr/bin/docker \
+--restart=always \
 -p 192.168.64.100:2222:2222 andockio/ssh2docksal --auth-type=noauth
 ```
 
@@ -32,5 +33,6 @@ docker run \
 -v /var/run/docker.sock:/var/run/docker.sock \
 -v /usr/bin/docker:/usr/bin/docker \
 -v ${HOME}/.ssh/authorized_keys:/root/.ssh/authorized_keys \
+--restart=always \
 -p 192.168.64.100:2222:2222 andockio/ssh2docksal
 ```

@@ -53,7 +53,7 @@ func TestGetContainerId(t *testing.T) {
 		}
 
 		if (id != test.containerID) {
-			t.Errorf("Invalid id: %.", id)
+			t.Errorf("Invalid id: %s", id)
 		}
 	}
 
