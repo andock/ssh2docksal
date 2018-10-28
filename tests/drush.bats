@@ -4,16 +4,19 @@
 
 @test "drush sa" {
   cd ssh2docksal_source/docroot
-  fin drush sa
-  fin drush @ssh2docksal.target sa
+  run fin drush sa
+  [ $status = 0 ]
 
+  run fin drush @ssh2docksal.target sa
+  [ $status = 0 ]
 }
 
 @test "drush sql-sync" {
   cd ssh2docksal_source/docroot
-  fin drush sql-drop -y
-  fin drush sql-sync @ssh2docksal.target @self -y
-
+  run fin drush sql-drop -y
+  [ $status = 0 ]
+  run fin drush sql-sync @ssh2docksal.target @self -y
+  [ $status = 0 ]
   run 'curl -sL -I  http://ssh2docksal-source.docksal | grep "HTTP/1.1 200 OK"'
   [[ "$output" =~ "HTTP/1.1 200 OK" ]]
 }
