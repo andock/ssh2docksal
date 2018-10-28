@@ -22,12 +22,9 @@ cd ssh2docksal_target
 fin init
 cd ..
 
-cd ssh2docksal_source/docroot
-fin drush @ssh2docksal.target sa
-cd ..
-cd ..
 # ==================  Setup drush aliases ==============================
 cp ssh2docksal.aliases.drushrc.php ssh2docksal_source/drush/
+
 
 
 # ==================  Setup ssh ==============================
@@ -44,3 +41,8 @@ ssh-add ~/.ssh/id_rsa
 #  ==================  Start ssh2docksal docker image ==============================
 ./startup.sh
 
+cd ssh2docksal_source/docroot
+fin drush @ssh2docksal.target sa
+
+cd ..
+cd ..
