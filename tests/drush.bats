@@ -4,11 +4,11 @@
 
 @test "drush sa" {
   cd ssh2docksal_source/docroot
-  run fin drush sa
-  [ $status = 0 ]
+  fin drush sa
 
-  run fin drush @ssh2docksal.target sa
-  [ $status = 0 ]
+
+  fin drush @ssh2docksal.target sa
+
 }
 
 @test "drush sql-sync" {
