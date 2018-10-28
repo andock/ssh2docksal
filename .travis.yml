@@ -21,6 +21,7 @@ script:
 - cd tests
 - ./init.sh
 - ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ssh2docksal_target@192.168.64.100 -p 2222 ls
+
 - bats simple.bats
 - bats drush.bats
 

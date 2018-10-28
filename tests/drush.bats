@@ -1,21 +1,6 @@
 #!/usr/bin/env bats
 
-setup() {
 
-    if [ ! -d "ssh2docksal_source" ]; then
-        git clone https://github.com/docksal/drupal8.git ssh2docksal_source
-        cd ssh2docksal_source
-        fin init
-        cd ..
-    fi
-
-    if [ ! -d "ssh2docksal_target" ]; then
-        cp -R ssh2docksal_source ssh2docksal_target
-         cd ssh2docksal_target
-         fin init
-         cd ..
-     fi
-}
 
 @test "drush sa" {
   cd ssh2docksal_source/docroot

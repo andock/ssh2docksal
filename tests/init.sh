@@ -8,8 +8,23 @@ set -e
 # ================== Install docksal ==============================
 curl -fsSL get.docksal.io | bash
 
+
+# ================== Initialize docksal projects ==============================
+# Clone test repositories
+git clone https://github.com/docksal/drupal8.git ssh2docksal_source
+cp -R ssh2docksal_source ssh2docksal_target
+
+cd ssh2docksal_source
+fin init
+cd ..
+
+cd ssh2docksal_target
+fin init
+cd ..
+
 # ==================  Setup drush aliases ==============================
 cp ssh2docksal.aliases.drushrc.php ssh2docksal_source/drush/
+
 
 # ==================  Setup ssh ==============================
 # Setup ssh keys
