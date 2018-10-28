@@ -5,8 +5,6 @@
 @test "drush sa" {
   cd ssh2docksal_source/docroot
   fin drush sa
-
-
   fin drush @ssh2docksal.target sa
 
 }
