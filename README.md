@@ -17,22 +17,24 @@ Connect to the `db` container of `projectname`
 ```
 
 ## Usage without authorization:
+E.g. To connect phpStorm via ssh.
 ```
 docker run \
 -d \
 -v /var/run/docker.sock:/var/run/docker.sock \
 -v /usr/bin/docker:/usr/bin/docker \
---restart=always \
+--name=ssh2docksal \
 -p 192.168.64.100:2222:2222 andockio/ssh2docksal --auth-type=noauth
 ```
 
 ## Usage with authorization:
+E.g. for your sandbox server.
 ```
 docker run \
 -d \
 -v /var/run/docker.sock:/var/run/docker.sock \
 -v /usr/bin/docker:/usr/bin/docker \
 -v ${HOME}/.ssh/authorized_keys:/root/.ssh/authorized_keys \
---restart=always \
+--name=ssh2docksal \
 -p 192.168.64.100:2222:2222 andockio/ssh2docksal
 ```

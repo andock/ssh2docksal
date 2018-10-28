@@ -16,6 +16,15 @@ func StartServer(c *cli.Context) {
 		log.Info("Used authorized_key_file: " + authorizedKeyFile)
 		authorization = ssh2docksal.PublicKeyAuth(authorizedKeyFile)
 	}
+	if c.String("auth-type") == "noauth" {
+		authorizedKeyFile := c.String("authorized-key-file")
+		log.Info("Used authorized_key_file: " + authorizedKeyFile)
+		authorization = ssh2docksal.NoAuth()
+	}
+	if (authorization == nil) {
+		log.Warn("No valid authenification type" + c.String("auth-type"))
+		return
+	}
 	ssh2docksal.SSHHandler()
 	bindPort := c.String("bind")
 	log.Info("Starting ssh server on port " + bindPort)
