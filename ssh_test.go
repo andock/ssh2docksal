@@ -40,8 +40,8 @@ func TestGetContainerId(t *testing.T) {
 
 	}{
 		{ name: "project", containerID: "project_cli_1", shouldReturnError: false},
-		{ name: "project--cli", containerID: "project_cli_1", shouldReturnError: false},
-		{ name: "project--db", containerID: "project_db_1", shouldReturnError: false},
+		{ name: "project---cli", containerID: "project_cli_1", shouldReturnError: false},
+		{ name: "project---db", containerID: "project_db_1", shouldReturnError: false},
 	}
 
 	for _, test := range tests {

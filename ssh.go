@@ -90,7 +90,7 @@ func getContainerID(username string) (string, error) {
 	var err error
 	existingContainer := ""
 	var container string
-	s := strings.Split(username,"--")
+	s := strings.Split(username,"---")
 	projectName := s[0]
 
 	if len(s) == 2 {
