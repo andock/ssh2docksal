@@ -12,7 +12,9 @@ import (
 	"sync"
 	"syscall"
 	"unsafe"
+	"github.com/mbndr/figlet4go"
 )
+
 var findExecCommand = exec.Command
 
 func setWinsize(f *os.File, w, h int) {
@@ -31,6 +33,16 @@ func executePtyCommand(name string, args []string, s ssh.Session) {
 	cmd.Stdout = s
 	cmd.Stdin = s
 	cmd.Stderr = s
+
+
+	// ...
+
+	ascii := figlet4go.NewAsciiRender()
+
+	// The underscore would be an error
+	renderStr, _ := ascii.Render("docksal")
+
+	fmt.Fprintf(s, "%s\n\r", renderStr)
 
 	cmd.Env = append(cmd.Env, fmt.Sprintf("TERM=%s", ptyReq.Term))
 	f, err := pty.Start(cmd)
