@@ -14,6 +14,7 @@ before_install:
 - go get golang.org/x/tools/cmd/cover
 - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
 - go get -u golang.org/x/lint/golint
+- sudo apt-get install expect -y
 script:
 - make build
 - make docker
