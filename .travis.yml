@@ -15,6 +15,8 @@ before_install:
 - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
 - go get -u golang.org/x/lint/golint
 - sudo apt-get install expect -y
+- which expect
+-
 script:
 - make build
 - make docker
