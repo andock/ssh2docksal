@@ -12,7 +12,7 @@
 }
 
 @test "Test tty" {
-  ./tty.sh
+  expect tty.sh
   run ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ssh2docksal_target@192.168.64.100 -p 2222 ls tty.txt
   [[ "$output" =~ "tty.txt" ]]
 }
