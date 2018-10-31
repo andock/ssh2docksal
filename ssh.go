@@ -12,7 +12,7 @@ import (
 	"sync"
 	"syscall"
 	"unsafe"
-	"github.com/mbndr/figlet4go"
+
 )
 
 var findExecCommand = exec.Command
@@ -37,12 +37,6 @@ func executePtyCommand(name string, args []string, s ssh.Session) {
 
 	// ...
 
-	ascii := figlet4go.NewAsciiRender()
-
-	// The underscore would be an error
-	renderStr, _ := ascii.Render("docksal")
-
-	fmt.Fprintf(s, "%s\n\r", renderStr)
 
 	cmd.Env = append(cmd.Env, fmt.Sprintf("TERM=%s", ptyReq.Term))
 	f, err := pty.Start(cmd)
