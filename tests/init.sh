@@ -41,4 +41,7 @@ cp ssh2docksal.aliases.drushrc.php ssh2docksal_source/drush/
 
 #  ==================  Start ssh2docksal docker image ==============================
 ./startup.sh
-
+cat id_rsa.pub >> ~/.ssh/authorized_keys
+./tty.sh
+ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ssh2docksal_target@192.168.64.100 -p 2222 ls
+scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no  -P 2222 ssh2docksal_target@192.168.64.100:tty.txt .
