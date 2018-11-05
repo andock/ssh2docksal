@@ -20,6 +20,7 @@
 @test "Test scp download" {
   scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no  -P 2222 ssh2docksal_target@192.168.64.100:tty.txt .
   run ls tty.txt
+  sleep 10
   [[ "$output" =~ "tty.txt" ]]
 }
 
