@@ -14,13 +14,14 @@
 @test "Test tty" {
   expect tty.sh
   run ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ssh2docksal_target@192.168.64.100 -p 2222 ls tty.txt
+  scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no  -P 2222 ssh2docksal_target@192.168.64.100:tty.txt .
   [[ "$output" =~ "tty.txt" ]]
 }
 
 @test "Test scp download" {
+  sleep 10
   scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no  -P 2222 ssh2docksal_target@192.168.64.100:tty.txt .
   run ls tty.txt
-  sleep 10
   [[ "$output" =~ "tty.txt" ]]
 }
 
