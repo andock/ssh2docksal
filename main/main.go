@@ -12,11 +12,13 @@ import (
 // StartServer is the default cli action
 func StartServer(c *cli.Context) {
 	var authorization ssh.Option
+
 	if c.String("auth-type") == "public-key" {
 		authorizedKeyFile := c.String("authorized-key-file")
 		log.Info("Used authorized_key_file: " + authorizedKeyFile)
 		authorization = ssh2docksal.PublicKeyAuth(authorizedKeyFile)
 	}
+
 	if c.String("auth-type") == "noauth" {
 		authorizedKeyFile := c.String("authorized-key-file")
 		log.Info("Used authorized_key_file: " + authorizedKeyFile)
@@ -26,6 +28,14 @@ func StartServer(c *cli.Context) {
 		log.Warn("No valid authenification type" + c.String("auth-type"))
 		return
 	}
+
+
+	level := log.InfoLevel
+	if c.Bool("verbose") {
+		level = log.DebugLevel
+	}
+	log.SetLevel(level)
+
 	adapter := &docker_cli.CliDockerClient{}
 	ssh2docksal.SSHHandler(adapter, ssh2docksal.Config{Banner: c.String("banner")})
 	bindPort := c.String("bind")
