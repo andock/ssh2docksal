@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/andock/ssh2docksal"
+	"github.com/andock/ssh2docksal/docker_cli"
 	"github.com/apex/log"
 	"github.com/codegangsta/cli"
 	"github.com/gliderlabs/ssh"
@@ -25,7 +26,8 @@ func StartServer(c *cli.Context) {
 		log.Warn("No valid authenification type" + c.String("auth-type"))
 		return
 	}
-	ssh2docksal.SSHHandler()
+	adapter := &docker_cli.CliDockerClient{}
+	ssh2docksal.SSHHandler(adapter, ssh2docksal.Config{Banner: c.String("banner")})
 	bindPort := c.String("bind")
 	log.Info("Starting ssh server on port " + bindPort)
 	log.WithError(ssh.ListenAndServe(bindPort, nil, authorization))

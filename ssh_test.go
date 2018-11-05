@@ -1,37 +1,26 @@
 package ssh2docksal
 
 import (
-	"fmt"
+
 	"github.com/apex/log"
-	"os"
-	"os/exec"
-	"strings"
 	"testing"
+	"github.com/gliderlabs/ssh"
 )
 
-var execMode = ""
+func (a *testClient) Find(containerName string) (string, error){
+	return containerName, nil
 
-func fakeExecCommand(command string, args...string) *exec.Cmd {
-	cmd := exec.Command(os.Args[0], command)
-	cmd.Env = []string{"GO_TEST_MODE=" + execMode, "GO_TEST_ARG_0="+args[0], "GO_TEST_ARG_1="+args[1]}
-	return cmd
 }
 
-func TestMain(m *testing.M) {
-	switch os.Getenv("GO_TEST_MODE") {
-	case "":
-		// Normal test mode
-		os.Exit(m.Run())
-	case "getContainerId":
-		fmt.Println(strings.Replace(os.Getenv("GO_TEST_ARG_1") ,"--filter=name=","",1))
-	}
+func (a *testClient) Execute (containerID string, s ssh.Session, c Config) {
+
 }
 
-func TestGetContainerId(t *testing.T) {
-	findExecCommand = fakeExecCommand
-	execMode = "getContainerId"
+type testClient struct {
 
-	defer func(){ findExecCommand = exec.Command }()
+}
+
+func TestGetContainerID(t *testing.T) {
 
 	tests := []struct{
 		name      string
@@ -45,7 +34,8 @@ func TestGetContainerId(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		id, err := getContainerID(test.name)
+		client := &testClient{};
+		id, err := getContainerID(client, test.name)
 		log.Infof("Container id: %s\n", id )
 
 		if err != nil {
@@ -56,5 +46,4 @@ func TestGetContainerId(t *testing.T) {
 			t.Errorf("Invalid id: %s", id)
 		}
 	}
-
 }
