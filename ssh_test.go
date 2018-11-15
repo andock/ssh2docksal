@@ -3,6 +3,7 @@ package ssh2docksal
 import (
 
 	"github.com/apex/log"
+	"github.com/pkg/sftp"
 	"testing"
 	"github.com/gliderlabs/ssh"
 )
@@ -19,7 +20,10 @@ func (a *testClient) Execute (containerID string, s ssh.Session, c Config) {
 type testClient struct {
 
 }
-
+func (a *testClient) SftpHandler(containerID string) (sftp.Handlers) {
+	var handler sftp.Handlers
+	return handler
+}
 func TestGetContainerID(t *testing.T) {
 
 	tests := []struct{

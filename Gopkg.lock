@@ -26,12 +26,29 @@
   version = "v1.20.0"
 
 [[projects]]
-  digest = "1:74d60c90a8daf329b92887e404a23d999ff95bc7a9c111476c1753bcf178e384"
+  branch = "subsystem"
+  digest = "1:3317e00c2f1704922f57d800777dec0646b1488f0538fa0edade0f945b07493a"
   name = "github.com/gliderlabs/ssh"
   packages = ["."]
   pruneopts = "UT"
-  revision = "d3a6756290240931faaf90ec97ddd5d9290623d8"
-  version = "v0.1.1"
+  revision = "f589014b954935c4174d2127836c11980e2ac8d1"
+  source = "github.com/DSpeichert/ssh"
+
+[[projects]]
+  digest = "1:3a26588bc48b96825977c1b3df964f8fd842cd6860cc26370588d3563433cf11"
+  name = "github.com/google/uuid"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "d460ce9f8df2e77fb1ba55ca87fafed96c607494"
+  version = "v1.0.0"
+
+[[projects]]
+  digest = "1:9cedee824c21326bd26950bd9e1ffe9dc4e7ca03dc8634d0e6f954ee6a383172"
+  name = "github.com/kr/fs"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "1455def202f6e05b95cc7bfc7e8ae67ae5141eba"
+  version = "v0.1.0"
 
 [[projects]]
   digest = "1:29d28429a93b076908a36420a7ecb2bf429d24c15a4b5e2c220ea00fc84b71af"
@@ -59,7 +76,16 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:2464e24610e1cdab712d3955745c0da6d1d26c50d6a7aecf61ebe07e68d2ec4d"
+  digest = "1:62a47d869dc951ec3b4250802a52c91107ad91169b790e24a09360895a9fecd0"
+  name = "github.com/pkg/sftp"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "3d708a600735032c0a7e26ead9e3d08ccd2711ff"
+  source = "github.com/christianwiedemann/sftp"
+
+[[projects]]
+  branch = "master"
+  digest = "1:082c538aa8ca5e086d5d20ec16417e7fca237de2c4146485e02aa09989d0ff38"
   name = "golang.org/x/crypto"
   packages = [
     "curve25519",
@@ -71,7 +97,7 @@
     "ssh",
   ]
   pruneopts = "UT"
-  revision = "0c41d7ab0a0ee717d4590a44bcb987dfd9e183eb"
+  revision = "3d3f9f413869b949e48070b5bc593aa22cc2b8f2"
 
 [solve-meta]
   analyzer-name = "dep"
@@ -80,8 +106,10 @@
     "github.com/apex/log",
     "github.com/codegangsta/cli",
     "github.com/gliderlabs/ssh",
+    "github.com/google/uuid",
     "github.com/kr/pty",
     "github.com/mbndr/figlet4go",
+    "github.com/pkg/sftp",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

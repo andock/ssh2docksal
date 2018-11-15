@@ -7,6 +7,7 @@ import (
 	"github.com/gliderlabs/ssh"
 	"github.com/kr/pty"
 	"github.com/mbndr/figlet4go"
+	"github.com/pkg/sftp"
 	"io"
 	"os"
 	"os/exec"
@@ -21,11 +22,14 @@ func setWinsize(f *os.File, w, h int) {
 		uintptr(unsafe.Pointer(&struct{ h, w, x, y uint16 }{uint16(h), uint16(w), 0, 0})))
 }
 // CliDockerClient is
-type CliDockerClient struct {
-
+type CliDockerHandler struct {
 }
 
-func (a *CliDockerClient) Find(containerName string) (string, error){
+func (a *CliDockerHandler) SftpHandler(containerID string) (sftp.Handlers) {
+	return DockerCliSftpHandler(containerID);
+}
+
+func (a *CliDockerHandler) Find(containerName string) (string, error){
 
 	findExecResult := exec.Command("docker", "ps", fmt.Sprintf("--filter=name=%s", containerName), "--quiet", "--no-trunc")
 	buf, err := findExecResult.CombinedOutput()
@@ -41,15 +45,13 @@ func (a *CliDockerClient) Find(containerName string) (string, error){
 	return existingContainer, nil
 }
 
-func (a *CliDockerClient) Execute (containerId string, s ssh.Session, c ssh2docksal.Config) {
+func (a *CliDockerHandler) Execute (containerID string, s ssh.Session, c ssh2docksal.Config) {
 	var entrypoint = "/bin/bash"
 	var command = s.Command()
 	var joinedArgs string
 
 	var isPty bool
 	_, _, isPty = s.Pty()
-
-	log.Debugf("Found container %s", containerId)
 
 	// Attaching to an existing container
 	args := []string{"exec"}
@@ -61,7 +63,7 @@ func (a *CliDockerClient) Execute (containerId string, s ssh.Session, c ssh2dock
 		args = append(args, "-t")
 	}
 
-	args = append(args, containerId)
+	args = append(args, containerID)
 	if entrypoint != "" {
 		args = append(args, entrypoint)
 	}
@@ -134,7 +136,7 @@ func executePtyCommand(name string, args []string, s ssh.Session, c ssh2docksal.
 	cmd.Stderr = s
 
 	ascii := figlet4go.NewAsciiRender()
-	renderStr, _ := ascii.Render(c.Banner)
+	renderStr, _ := ascii.Render(c.WelcomeMessage)
 	fmt.Fprintf(s, "%s\n\r", renderStr)
 
 	cmd.Env = append(cmd.Env, fmt.Sprintf("TERM=%s", ptyReq.Term))

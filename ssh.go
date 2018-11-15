@@ -3,19 +3,20 @@ package ssh2docksal
 import (
 	"github.com/apex/log"
 	"github.com/gliderlabs/ssh"
+	"github.com/pkg/sftp"
 	"strings"
 )
 
 // DockerClientInterface for differnt docker clients
 type dockerClientInterface interface {
-	Execute(containerName string, s ssh.Session, c Config)
+	Execute(containerID string, s ssh.Session, c Config)
 	Find(containerName string) (string, error)
+	SftpHandler(containerID string) (sftp.Handlers)
 }
 
 // Config for ssh options
 type Config struct {
-	Banner string
-	Debug bool
+	WelcomeMessage string
 }
 
 func getContainerID(client dockerClientInterface, username string) (string, error) {
@@ -35,20 +36,34 @@ func getContainerID(client dockerClientInterface, username string) (string, erro
 }
 
 // SSHHandler handles the ssh connection
-func SSHHandler(client dockerClientInterface, c Config) {
+func SSHHandler(sshHandler dockerClientInterface, c Config) {
 	ssh.Handle(func(s ssh.Session) {
-		log.Debugf("Start connection")
+		x := s.Environ()
 
-		existingContainer, err := getContainerID(client, s.User())
+		log.Debugf(string(len(x)))
+		existingContainer, err := getContainerID(sshHandler, s.User())
+
+		if existingContainer == "" {
+			log.Errorf("No container found for name %s", s.User())
+			s.Exit(1)
+			return
+		}
+
+		log.Debugf("Found container %s", existingContainer)
 
 		if (err != nil) {
 			s.Exit(1)
 			return
 		}
 
-		// Opening Docker process
-		if existingContainer != "" {
-			client.Execute(existingContainer, s, c)
+		if s.Subsystem() == "sftp" {
+			log.Debugf("Start sftp")
+			sftpServer := sftp.NewRequestServer(s, sshHandler.SftpHandler(existingContainer))
+			_ = sftpServer.Serve()
+
+		} else {
+			sshHandler.Execute(existingContainer, s, c)
 		}
+
 	})
 }

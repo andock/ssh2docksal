@@ -20,8 +20,7 @@ func StartServer(c *cli.Context) {
 	}
 
 	if c.String("auth-type") == "noauth" {
-		authorizedKeyFile := c.String("authorized-key-file")
-		log.Info("Used authorized_key_file: " + authorizedKeyFile)
+		log.Info("Authorization: auth-type")
 		authorization = ssh2docksal.NoAuth()
 	}
 	if (authorization == nil) {
@@ -36,8 +35,9 @@ func StartServer(c *cli.Context) {
 	}
 	log.SetLevel(level)
 
-	adapter := &docker_cli.CliDockerClient{}
-	ssh2docksal.SSHHandler(adapter, ssh2docksal.Config{Banner: c.String("banner")})
+	sshHandler := &docker_cli.CliDockerHandler{}
+
+	ssh2docksal.SSHHandler(sshHandler, ssh2docksal.Config{WelcomeMessage: c.String("welcome-message")})
 	bindPort := c.String("bind")
 	log.Info("Starting ssh server on port " + bindPort)
 	log.WithError(ssh.ListenAndServe(bindPort, nil, authorization))
@@ -48,17 +48,13 @@ func main() {
 	app := cli.NewApp()
 	app.Author = "Christian Wiedemann"
 	app.Email = "christian.wiedemann@key-tec.de"
-	app.Version = "1.0"
+	app.Version = "0.0.3"
 	app.Usage = "SSH to docksal"
 
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{
 			Name:  "verbose, V",
 			Usage: "Enable verbose mode",
-		},
-		cli.StringFlag{
-			Name:  "syslog-server",
-			Usage: "Configure a syslog server, i.e: udp://localhost:514",
 		},
 		cli.StringFlag{
 			Name:  "bind, b",
@@ -75,8 +71,14 @@ func main() {
 			Value: os.Getenv("HOME") + "/.ssh/authorized_keys",
 			Usage: "Path to your authorized key file.",
 		},
+		cli.StringFlag{
+			Name:  "welcome-message",
+			Value: "docksal",
+			Usage: "Welcome message",
+		},
 
 	}
+	log.Infof("Welcome to ssh2docksal %s", app.Version)
 	app.Action = StartServer
 	app.Run(os.Args)
 }
