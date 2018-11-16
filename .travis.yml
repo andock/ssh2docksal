@@ -20,9 +20,10 @@ before_install:
 script:
 - make build
 - make docker
-- make test
 - cd tests
 - ./init.sh
+- cd ..
+- make test
 
 - bats simple.bats
 - bats drush.bats
