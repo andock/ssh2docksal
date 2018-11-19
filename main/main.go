@@ -23,11 +23,10 @@ func StartServer(c *cli.Context) {
 		log.Info("Authorization: auth-type")
 		authorization = ssh2docksal.NoAuth()
 	}
-	if (authorization == nil) {
+	if authorization == nil {
 		log.Warn("No valid authenification type" + c.String("auth-type"))
 		return
 	}
-
 
 	level := log.InfoLevel
 	if c.Bool("verbose") {
@@ -48,7 +47,7 @@ func main() {
 	app := cli.NewApp()
 	app.Author = "Christian Wiedemann"
 	app.Email = "christian.wiedemann@key-tec.de"
-	app.Version = "0.0.3"
+	app.Version = "0.0.9"
 	app.Usage = "SSH to docksal"
 
 	app.Flags = []cli.Flag{
@@ -59,6 +58,7 @@ func main() {
 		cli.StringFlag{
 			Name:  "bind, b",
 			Value: ":2222",
+
 			Usage: "Listen to address",
 		},
 		cli.StringFlag{
@@ -76,7 +76,6 @@ func main() {
 			Value: "docksal",
 			Usage: "Welcome message",
 		},
-
 	}
 	log.Infof("Welcome to ssh2docksal %s", app.Version)
 	app.Action = StartServer

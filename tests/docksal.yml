@@ -1,0 +1,10 @@
+version: "2.1"
+
+services:
+  cli:
+    volumes:
+      - /tmp:/tmp:rw
+  cli_ro:
+    image: ${CLI_IMAGE:-docksal/cli:2.5-php7.1}
+    volumes:
+    - /tmp:/tmp:ro

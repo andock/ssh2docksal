@@ -5,14 +5,16 @@ import (
 	"github.com/gliderlabs/ssh"
 	"io/ioutil"
 )
+
 // NoAuth for no authentification. Be careful!
-func NoAuth () ssh.Option {
+func NoAuth() ssh.Option {
 	return ssh.PublicKeyAuth(func(ctx ssh.Context, key ssh.PublicKey) bool {
 		return true
 	})
 }
+
 // PublicKeyAuth  perform public key authentification
-func PublicKeyAuth (authorizedKeysFile string) ssh.Option {
+func PublicKeyAuth(authorizedKeysFile string) ssh.Option {
 	return ssh.PublicKeyAuth(func(ctx ssh.Context, key ssh.PublicKey) bool {
 		authorizedKeysBytes, err := ioutil.ReadFile(authorizedKeysFile)
 		if err != nil {

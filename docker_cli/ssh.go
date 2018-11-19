@@ -21,17 +21,18 @@ func setWinsize(f *os.File, w, h int) {
 	syscall.Syscall(syscall.SYS_IOCTL, f.Fd(), uintptr(syscall.TIOCSWINSZ),
 		uintptr(unsafe.Pointer(&struct{ h, w, x, y uint16 }{uint16(h), uint16(w), 0, 0})))
 }
+
 // CliDockerClient is
 type CliDockerHandler struct {
 }
 
-func (a *CliDockerHandler) SftpHandler(containerID string) (sftp.Handlers) {
-	return DockerCliSftpHandler(containerID);
+func (a *CliDockerHandler) SftpHandler(containerID string) sftp.Handlers {
+	return DockerCliSftpHandler(containerID)
 }
 
-func (a *CliDockerHandler) Find(containerName string) (string, error){
+func (a *CliDockerHandler) Find(containerName string) (string, error) {
 
-	findExecResult := exec.Command("docker", "ps", fmt.Sprintf("--filter=name=%s", containerName), "--quiet", "--no-trunc")
+	findExecResult := exec.Command("docker", "ps", fmt.Sprintf("--filter=name=%s$", containerName), "--quiet", "--no-trunc")
 	buf, err := findExecResult.CombinedOutput()
 	if err != nil {
 		log.Errorf("docker ps ... failed: %v", err)
@@ -45,7 +46,7 @@ func (a *CliDockerHandler) Find(containerName string) (string, error){
 	return existingContainer, nil
 }
 
-func (a *CliDockerHandler) Execute (containerID string, s ssh.Session, c ssh2docksal.Config) {
+func (a *CliDockerHandler) Execute(containerID string, s ssh.Session, c ssh2docksal.Config) {
 	var entrypoint = "/bin/bash"
 	var command = s.Command()
 	var joinedArgs string
@@ -71,7 +72,7 @@ func (a *CliDockerHandler) Execute (containerID string, s ssh.Session, c ssh2doc
 	if len(command) != 0 {
 		args = append(args, "-lc")
 		args = append(args, strings.Join(command, " "))
-		isScp = (command[0] == "rsync" || command[0] == "scp");
+		isScp = (command[0] == "rsync" || command[0] == "scp")
 	}
 	joinedArgs = strings.Join(args, " ")
 	log.Debugf("Executing 'docker %s'", joinedArgs)
@@ -87,11 +88,11 @@ func executeCommand(name string, args []string, s ssh.Session, isScp bool) {
 	cmd := exec.Command(name, args...)
 	log.Debugf("executeCommand started. Mode:  %s\n")
 
-	if (!isScp) {
+	if !isScp {
 		cmd.Stdout = s
 		cmd.Stderr = s
 	}
-	if (isScp) {
+	if isScp {
 		stdin, err := cmd.StdinPipe()
 		if err != nil {
 			log.Warnf("Could not open stdin pipe of command: %s\n", err)

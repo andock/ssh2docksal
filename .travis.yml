@@ -25,6 +25,7 @@ script:
 - cd ..
 - make test
 
+- cd tests
 - bats simple.bats
 - bats drush.bats
 

@@ -37,7 +37,7 @@ $(BINARIES):	$(SOURCES)
 test:
 	#$(GO) get -t ./...
 	$(GO) test -i $(PACKAGES) $(COMMANDS)
-	$(GO) test -v $(PACKAGES) $(COMMANDS)
+	$(GO) test $(PACKAGES) -v -integration $(COMMANDS)
 
 
 .PHONY: install

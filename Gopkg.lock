@@ -107,8 +107,10 @@
     "github.com/codegangsta/cli",
     "github.com/gliderlabs/ssh",
     "github.com/google/uuid",
+    "github.com/kr/fs",
     "github.com/kr/pty",
     "github.com/mbndr/figlet4go",
+    "github.com/pkg/errors",
     "github.com/pkg/sftp",
   ]
   solver-name = "gps-cdcl"

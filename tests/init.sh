@@ -30,6 +30,7 @@ cd ssh2docksal_source
 fin init
 fin ssh-add
 cd ..
+cp ./docksal.yml ssh2docksal_source/.docksal
 
 cd ssh2docksal_target
 fin init
@@ -37,6 +38,7 @@ cd ..
 
 # ==================  Setup drush aliases ==============================
 cp ssh2docksal.aliases.drushrc.php ssh2docksal_source/drush/
+
 
 
 #  ==================  Start ssh2docksal docker image ==============================

@@ -11,7 +11,7 @@ import (
 type dockerClientInterface interface {
 	Execute(containerID string, s ssh.Session, c Config)
 	Find(containerName string) (string, error)
-	SftpHandler(containerID string) (sftp.Handlers)
+	SftpHandler(containerID string) sftp.Handlers
 }
 
 // Config for ssh options
@@ -22,12 +22,12 @@ type Config struct {
 func getContainerID(client dockerClientInterface, username string) (string, error) {
 
 	var container string
-	s := strings.Split(username,"---")
+	s := strings.Split(username, "---")
 	projectName := s[0]
 
 	if len(s) == 2 {
 		container = s[1]
-	} else if (len(s) == 1) {
+	} else if len(s) == 1 {
 		container = "cli"
 	}
 
@@ -38,9 +38,6 @@ func getContainerID(client dockerClientInterface, username string) (string, erro
 // SSHHandler handles the ssh connection
 func SSHHandler(sshHandler dockerClientInterface, c Config) {
 	ssh.Handle(func(s ssh.Session) {
-		x := s.Environ()
-
-		log.Debugf(string(len(x)))
 		existingContainer, err := getContainerID(sshHandler, s.User())
 
 		if existingContainer == "" {
@@ -51,7 +48,7 @@ func SSHHandler(sshHandler dockerClientInterface, c Config) {
 
 		log.Debugf("Found container %s", existingContainer)
 
-		if (err != nil) {
+		if err != nil {
 			s.Exit(1)
 			return
 		}

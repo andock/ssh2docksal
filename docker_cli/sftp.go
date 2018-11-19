@@ -1,6 +1,5 @@
 package docker_cli
 
-
 // This serves as an example of how to implement the request server handler as
 // well as a dummy backend for testing. It implements an in-memory backend that
 // works as a very simple filesystem with simple flat key-value lookup system.
@@ -10,147 +9,48 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/sftp"
 	"io"
+	"io/ioutil"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 )
 
-func getRoot(containerID string) (*root){
+func getRoot(containerID string) *root {
 	root := &root{
-		files: make(map[string]*dockerFile),
+		files:       make(map[string]*dockerFile),
 		containerID: containerID,
 	}
 	root.dockerFile = newDockerFile("/", true, root.containerID)
 	return root
 }
+
 // DocCliHandler returns a Hanlders object for docker cli.
 func DockerCliSftpHandler(containerID string) sftp.Handlers {
 	root := getRoot(containerID)
 	return sftp.Handlers{root, root, root, root}
 }
 
-func (fs *dockerFile) execFileUpload(localFile *os.File) (error) {
-	args := []string{"cp"}
-	args = append(args, localFile.Name())
-	args = append(args, fs.containerID + ":" + fs.name)
-	cmd := exec.Command("docker", args...)
-	_, err := cmd.CombinedOutput()
-	return err;
-}
-
-
-func (fs *dockerFile) execFileDownload(localFilePath string) (error) {
-	args := []string{"cp"}
-	args = append(args, fs.containerID + ":" + fs.name)
-	args = append(args, localFilePath)
-	cmd := exec.Command("docker", args...)
-	_, err := cmd.CombinedOutput()
-	return err;
-}
-
-func (fs *root) execFileInfo(fileName string, modifier string) (bool, error) {
-	args := getBaseArgs(fs.containerID)
-	args = append(args, "if [ -"+ modifier + " " + fileName + " ]; then echo 1; else echo 0; fi")
-	cmd := exec.Command("docker", args...)
-	outputBytes, err := cmd.CombinedOutput()
-	output := strings.TrimSpace(string(outputBytes))
-	if (output == "1") {
-		return true, err;
-	} else if (output == "0") {
-		return false, err;
-	}
-	return false, err;
-}
-
-func (fs *root) execFileRename(sourceName string, targetName string) (error) {
-	args := getBaseArgs(fs.containerID)
-	args = append(args, "mv " + sourceName + " " + targetName)
-	cmd := exec.Command("docker", args...)
-	_, err := cmd.CombinedOutput()
-	return err;
-}
-
-func (fs *root) execMkDir(folderName string, rootFolder string) (error) {
-	args := getBaseArgs(fs.containerID)
-	args = append(args, "cd " + rootFolder + "; mkdir " + folderName)
-	cmd := exec.Command("docker", args...)
-	_, err := cmd.CombinedOutput()
-	return err;
-}
-
-
-func getBaseArgs(containerID string) ([]string) {
-	args := []string{"exec"}
-	args = append(args, "-u")
-	args = append(args, "docker")
-	args = append(args, containerID)
-	args = append(args, "bash")
-	args = append(args, "-c")
-	return args
-}
-
-func (fs *root) execFileList(folderName string) ([]os.FileInfo, error) {
-	args := getBaseArgs(fs.containerID)
-	args = append(args, "ls -a " + folderName)
-	cmd := exec.Command("docker", args...)
-	outputBytes, err := cmd.CombinedOutput()
-	names := strings.Split(string(outputBytes), "\n")
-	valid_names := []string{}
-	for _, fn := range names {
-		if fn != "" && fn != "." && fn != ".." {
-			valid_names = append(valid_names, fn)
-		}
-	}
-	sort.Strings(valid_names)
-	list := make([]os.FileInfo, len(valid_names))
-	for i, fn := range valid_names {
-		seperator := ""
-		if (folderName != "/") {
-			seperator = "/"
-		}
-		item, _ := fs.fetch(folderName + seperator + fn)
-		list[i] = item
-
-	}
-	return list, err;
-}
-
 func (fs *root) Fileread(r *sftp.Request) (io.ReaderAt, error) {
-	if fs.mockErr != nil {
-		return nil, fs.mockErr
-	}
 	fs.filesLock.Lock()
 	defer fs.filesLock.Unlock()
 	file, err := fs.fetch(r.Filepath)
 	uuid, err := uuid.NewRandom()
 	tmpFileFile := os.TempDir() + "/" + uuid.String()
 	file.execFileDownload(tmpFileFile)
-	f, err := os.Open(tmpFileFile)
-	b1 := make([]byte, 5)
-	f.Read(b1)
+	bytes, err := ioutil.ReadFile(tmpFileFile)
 	if err != nil {
 		return nil, err
 	}
-	file.content = b1
+	file.content = bytes
 	os.Remove(tmpFileFile)
 
-	if file.symlink != "" {
-		file, err = fs.fetch(file.symlink)
-		if err != nil {
-			return nil, err
-		}
-	}
 	return file.ReaderAt()
 }
 
 func (fs *root) Filewrite(r *sftp.Request) (io.WriterAt, error) {
-	if fs.mockErr != nil {
-		return nil, fs.mockErr
-	}
 	fs.filesLock.Lock()
 	defer fs.filesLock.Unlock()
 	file, err := fs.fetch(r.Filepath)
@@ -164,39 +64,84 @@ func (fs *root) Filewrite(r *sftp.Request) (io.WriterAt, error) {
 		}
 		file = newDockerFile(r.Filepath, false, fs.containerID)
 		fs.files[r.Filepath] = file
+	} else {
+		file.cleanTmpFile()
+		file.content = nil
 	}
+
+	uuid, err := uuid.NewRandom()
+	tmpFilePath := os.TempDir() + "/" + uuid.String()
+	tmpFile, err := os.Create(tmpFilePath) //os.Create(tmpFilePath)
+	if err != nil {
+		return nil, err
+	}
+	file.tempFile = tmpFile
 	return file.WriterAt()
 }
+func oct(i int, prefix bool) string {
+	i64 := int64(i)
 
-func (fs *root) Filecmd(r *sftp.Request) error {
-	if fs.mockErr != nil {
-		return fs.mockErr
+	if prefix {
+		return "0o" + strconv.FormatInt(i64, 8) // base 8 for octal
+	} else {
+		return strconv.FormatInt(i64, 8) // base 8 for octal
 	}
-	fs.filesLock.Lock()
-	defer fs.filesLock.Unlock()
+}
+func (fs *root) Filecmd(r *sftp.Request) error {
 	switch r.Method {
 	case "Setstat":
+		// CHMOD
+		attrFlags := r.AttrFlags()
+		if (attrFlags.Permissions) {
+			file, err := fs.fetch(r.Filepath)
+			if (err != nil) {
+				return err
+			}
+			fileStat := r.Attributes()
+			fileMode := fileStat.FileMode()
+			permissions := oct(int(fileMode), false)
+			return file.execFileChmod(string(permissions))
+		}
+		if (attrFlags.Size) {
+			file, err := fs.fetch(r.Filepath)
+			if (err != nil) {
+				return err
+			}
+			fileStat := r.Attributes()
+			size := fileStat.Size
+			return file.execTruncate(size)
+		}
 		return nil
 	case "Rename":
-		err := fs.execFileRename(r.Filepath, r.Target)
+		file, err := fs.fetch(r.Filepath)
+		if (err != nil) {
+			return err
+		}
+		err = file.execFileRename(r.Target)
 		if err != nil {
 			return err
 		}
 	case "Rmdir", "Remove":
-		_, err := fs.fetch(filepath.Dir(r.Filepath))
-		if err != nil {
-			return err
-		}
-		delete(fs.files, r.Filepath)
+		return nil
+//		file, err := fs.fetch(r.Filepath)
+		//		if err != nil {
+		//	return err
+		//}
+		//err = file.remove()
+		//if err != nil {
+		//	return err
+		//}
+		//delete(fs.files, r.Filepath)
 	case "Mkdir":
 		folder, err := fs.fetch(filepath.Dir(r.Filepath))
 		if err != nil {
 			return err
 		}
-		err = fs.execMkDir(filepath.Base(r.Filepath), folder.name)
+		err = folder.execMkDir(filepath.Base(r.Filepath))
 		if err != nil {
 			return err
 		}
+		newDockerFile(r.Filepath, true, folder.containerID)
 	case "Symlink":
 		// Not implemented
 	}
@@ -218,14 +163,8 @@ func (f listerat) ListAt(ls []os.FileInfo, offset int64) (int, error) {
 	return n, nil
 }
 
-
 func (fs *root) Filelist(r *sftp.Request) (sftp.ListerAt, error) {
 
-	if fs.mockErr != nil {
-		return nil, fs.mockErr
-	}
-	fs.filesLock.Lock()
-	defer fs.filesLock.Unlock()
 	path := r.Filepath
 	if r.Filepath == "/" {
 		path = fs.dockerFile.name
@@ -233,7 +172,11 @@ func (fs *root) Filelist(r *sftp.Request) (sftp.ListerAt, error) {
 
 	switch r.Method {
 	case "List":
-		list, err := fs.execFileList(path)
+		parent, err:= fs.fetch(path)
+		if (err != nil) {
+			return nil, err
+		}
+		list, err := parent.execFileList(fs)
 		return listerat(list), err
 	case "Stat":
 		file, err := fs.fetch(path)
@@ -241,8 +184,6 @@ func (fs *root) Filelist(r *sftp.Request) (sftp.ListerAt, error) {
 			return nil, err
 		}
 		return listerat([]os.FileInfo{file}), nil
-
-		//
 	case "Readlink":
 		file, err := fs.fetch(r.Filepath)
 		if err != nil {
@@ -262,21 +203,20 @@ func (fs *root) Filelist(r *sftp.Request) (sftp.ListerAt, error) {
 // In memory file-system-y thing that the Hanlders live on
 type root struct {
 	*dockerFile
-	files     map[string]*dockerFile
-	filesLock sync.Mutex
-	mockErr   error
+	files       map[string]*dockerFile
+	filesLock   sync.Mutex
+
 	containerID string
 }
 
-// Set a mocked error that the next handler call will return.
-// Set to nil to reset for no error.
-func (fs *root) returnErr(err error) {
-	fs.mockErr = err
-}
+
 
 func (fs *root) fetch(path string) (*dockerFile, error) {
 	if path == "/" {
 		return fs.dockerFile, nil
+	}
+	if file, ok := fs.files[path]; ok {
+		return file, nil
 	}
 	hasPos := strings.Index(path, ".")
 	check1 := "d"
@@ -289,25 +229,29 @@ func (fs *root) fetch(path string) (*dockerFile, error) {
 	if err != nil {
 		return nil, err
 	}
-	if (check1_result == true && check1 == "d") {
-		file := newDockerFile(path, true, fs.containerID);
+	if check1_result == true && check1 == "d" {
+		file := newDockerFile(path, true, fs.containerID)
+		fs.files[path] = file
 		return file, nil
 	}
-	if (check1_result == true && check1 == "f") {
-		file := newDockerFile(path, false, fs.containerID);
+	if check1_result == true && check1 == "f" {
+		file := newDockerFile(path, false, fs.containerID)
+		fs.files[path] = file
 		return file, nil
 	}
 
 	check2_result, err := fs.execFileInfo(path, check2)
-	if (err != nil) {
+	if err != nil {
 		return nil, err
 	}
-	if (check2_result == true && check2 == "d") {
-		file := newDockerFile(path, true, fs.containerID);
+	if check2_result == true && check2 == "d" {
+		file := newDockerFile(path, true, fs.containerID)
+		fs.files[path] = file
 		return file, nil
 	}
-	if (check2_result == true && check2 == "f") {
-		file := newDockerFile(path, false, fs.containerID);
+	if check2_result == true && check2 == "f" {
+		file := newDockerFile(path, false, fs.containerID)
+		fs.files[path] = file
 		return file, nil
 	}
 	return nil, os.ErrNotExist
@@ -323,19 +267,29 @@ type dockerFile struct {
 	content     []byte
 	contentLock sync.RWMutex
 	containerID string
+	tempFile    *os.File
 }
 
 // factory to make sure modtime is set
 func newDockerFile(name string, isdir bool, containerID string) *dockerFile {
 	return &dockerFile{
-		name:    name,
-		modtime: time.Now(),
-		isdir:   isdir,
+		name:        name,
+		modtime:     time.Now(),
+		isdir:       isdir,
 		containerID: containerID,
 	}
 }
 
-// Have memFile fulfill os.FileInfo interface
+func (f *dockerFile) cleanTmpFile() error {
+	if f.tempFile != nil {
+		err := os.Remove(f.tempFile.Name())
+
+		return err
+	}
+	return nil
+}
+
+// Have dockerFile fulfill os.FileInfo interface
 func (f *dockerFile) Name() string { return filepath.Base(f.name) }
 func (f *dockerFile) Size() int64  { return int64(len(f.content)) }
 func (f *dockerFile) Mode() os.FileMode {
@@ -370,15 +324,14 @@ func (f *dockerFile) WriterAt() (io.WriterAt, error) {
 	return f, nil
 }
 func (f *dockerFile) WriteAt(p []byte, off int64) (int, error) {
-	uuid, err := uuid.NewRandom()
-	tmpFile := os.TempDir() + "/" + uuid.String()
-	createdFile, err := os.Create(tmpFile)
-	if (err != nil) {
+	n, err := f.tempFile.WriteAt(p, off)
+	if err != nil {
 		return 0, err
 	}
-	createdFile.Write(p)
-	f.execFileUpload(createdFile)
-	os.Remove(tmpFile)
-	return len(p), nil
+	if len(p) != 0 {
+		err = f.execFileUpload(f.tempFile)
+	} else {
+		err = f.execFileCreate()
+	}
+	return n, err
 }
-
