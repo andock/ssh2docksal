@@ -18,6 +18,7 @@ before_install:
 - which expect
 -
 script:
+- set -e
 - make build
 - make docker
 - cd tests

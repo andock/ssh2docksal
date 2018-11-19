@@ -30,7 +30,7 @@ cd ssh2docksal_source
 fin init
 #fin ssh-add
 cd ..
-cp .docksal.yml ssh2docksal_source/.docksal
+cp docksal.yml ssh2docksal_source/.docksal/docksal.yml
 
 cd ssh2docksal_target
 fin init
