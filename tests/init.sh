@@ -28,9 +28,9 @@ cp -R ssh2docksal_source ssh2docksal_target
 
 cd ssh2docksal_source
 fin init
-fin ssh-add
+#fin ssh-add
 cd ..
-cp ./docksal.yml ssh2docksal_source/.docksal
+cp .docksal.yml ssh2docksal_source/.docksal
 
 cd ssh2docksal_target
 fin init
