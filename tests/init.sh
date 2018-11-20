@@ -28,7 +28,7 @@ cp docksal.yml ssh2docksal_source/.docksal/docksal.yml
 cp -R ssh2docksal_source ssh2docksal_target
 cd ssh2docksal_source
 fin init
-fin ssh-add id_rsa
+#fin ssh-add id_rsa
 
 cd ..
 cd ssh2docksal_target
