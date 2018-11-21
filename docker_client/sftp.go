@@ -1,4 +1,4 @@
-package docker_cli
+package docker_client
 
 // This serves as an example of how to implement the request server handler as
 // well as a dummy backend for testing. It implements an in-memory backend that
@@ -122,16 +122,15 @@ func (fs *root) Filecmd(r *sftp.Request) error {
 			return err
 		}
 	case "Rmdir", "Remove":
-		return nil
-//		file, err := fs.fetch(r.Filepath)
-		//		if err != nil {
-		//	return err
-		//}
-		//err = file.remove()
-		//if err != nil {
-		//	return err
-		//}
-		//delete(fs.files, r.Filepath)
+		file, err := fs.fetch(r.Filepath)
+		if err != nil {
+			return err
+		}
+		err = file.remove()
+		if err != nil {
+			return err
+		}
+		delete(fs.files, r.Filepath)
 	case "Mkdir":
 		folder, err := fs.fetch(filepath.Dir(r.Filepath))
 		if err != nil {
@@ -176,7 +175,7 @@ func (fs *root) Filelist(r *sftp.Request) (sftp.ListerAt, error) {
 		if (err != nil) {
 			return nil, err
 		}
-		list, err := parent.execFileList(fs)
+		list, err := parent.execFileList()
 		return listerat(list), err
 	case "Stat":
 		file, err := fs.fetch(path)
@@ -218,43 +217,13 @@ func (fs *root) fetch(path string) (*dockerFile, error) {
 	if file, ok := fs.files[path]; ok {
 		return file, nil
 	}
-	hasPos := strings.Index(path, ".")
-	check1 := "d"
-	check2 := "f"
-	if hasPos != -1 {
-		check1 = "f"
-		check2 = "d"
-	}
-	check1_result, err := fs.execFileInfo(path, check1)
-	if err != nil {
-		return nil, err
-	}
-	if check1_result == true && check1 == "d" {
-		file := newDockerFile(path, true, fs.containerID)
-		fs.files[path] = file
-		return file, nil
-	}
-	if check1_result == true && check1 == "f" {
-		file := newDockerFile(path, false, fs.containerID)
-		fs.files[path] = file
-		return file, nil
-	}
 
-	check2_result, err := fs.execFileInfo(path, check2)
+	file, err := fs.execFileInfo(path)
 	if err != nil {
 		return nil, err
 	}
-	if check2_result == true && check2 == "d" {
-		file := newDockerFile(path, true, fs.containerID)
-		fs.files[path] = file
-		return file, nil
-	}
-	if check2_result == true && check2 == "f" {
-		file := newDockerFile(path, false, fs.containerID)
-		fs.files[path] = file
-		return file, nil
-	}
-	return nil, os.ErrNotExist
+	fs.files[path] = file
+	return file, nil
 }
 
 // Implements os.FileInfo, Reader and Writer interfaces.
@@ -263,6 +232,7 @@ type dockerFile struct {
 	name        string
 	modtime     time.Time
 	symlink     string
+	size	    string
 	isdir       bool
 	content     []byte
 	contentLock sync.RWMutex
@@ -270,6 +240,25 @@ type dockerFile struct {
 	tempFile    *os.File
 }
 
+func createNewDockerFile(lsString string, containerID string) (*dockerFile, error) {
+	//lsString = strings.Replace(lsString, "  ", " ", -1)
+	parts := strings.Fields(lsString)
+	isDirString := parts[0][0:1]
+	isDir:=false
+	nameIdentifier := 8
+	if (isDirString == "d") {
+		isDir = true
+		nameIdentifier = 8
+	}
+	size := parts[4]
+	name := strings.Join(parts[nameIdentifier:len(parts)], " ")
+	if (strings.Index(name, " ") != -1) {
+		name = name + ""
+	}
+	file := newDockerFile(name, isDir, containerID)
+	file.size = size
+	return file, nil
+}
 // factory to make sure modtime is set
 func newDockerFile(name string, isdir bool, containerID string) *dockerFile {
 	return &dockerFile{

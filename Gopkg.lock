@@ -2,6 +2,14 @@
 
 
 [[projects]]
+  digest = "1:f9ae348e1f793dcf9ed930ed47136a67343dbd6809c5c91391322267f4476892"
+  name = "github.com/Microsoft/go-winio"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "97e4973ce50b2ff5f09635a57e2b88a037aae829"
+  version = "v0.4.11"
+
+[[projects]]
   branch = "master"
   digest = "1:1a200e7e73293b75eb8e5c93d023b5472663432da0b663e1532624fcfede9ca8"
   name = "github.com/anmitsu/go-shlex"
@@ -26,6 +34,63 @@
   version = "v1.20.0"
 
 [[projects]]
+  digest = "1:3cabbabc9e0e4aa7e12b882bdc213f41cf8bd2b2ce2a7b5e0aceaf8a6a78049b"
+  name = "github.com/docker/distribution"
+  packages = [
+    "digest",
+    "reference",
+  ]
+  pruneopts = "UT"
+  revision = "48294d928ced5dd9b378f7fd7c6f5da3ff3f2c89"
+  version = "v2.6.2"
+
+[[projects]]
+  digest = "1:c9fed74f616e2e018bfe5dc82efb592233873744b818c6422a01f25431ecdd5b"
+  name = "github.com/docker/docker"
+  packages = [
+    "api/types",
+    "api/types/blkiodev",
+    "api/types/container",
+    "api/types/events",
+    "api/types/filters",
+    "api/types/mount",
+    "api/types/network",
+    "api/types/reference",
+    "api/types/registry",
+    "api/types/strslice",
+    "api/types/swarm",
+    "api/types/time",
+    "api/types/versions",
+    "api/types/volume",
+    "client",
+    "pkg/stdcopy",
+    "pkg/tlsconfig",
+  ]
+  pruneopts = "UT"
+  revision = "092cba3727bb9b4a2f0e922cd6c0f93ea270e363"
+  version = "v1.13.1"
+
+[[projects]]
+  digest = "1:811c86996b1ca46729bad2724d4499014c4b9effd05ef8c71b852aad90deb0ce"
+  name = "github.com/docker/go-connections"
+  packages = [
+    "nat",
+    "sockets",
+    "tlsconfig",
+  ]
+  pruneopts = "UT"
+  revision = "7395e3f8aa162843a74ed6d48e79627d9792ac55"
+  version = "v0.4.0"
+
+[[projects]]
+  digest = "1:6f82cacd0af5921e99bf3f46748705239b36489464f4529a1589bc895764fb18"
+  name = "github.com/docker/go-units"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "47565b4f722fb6ceae66b95f853feed578a4a51c"
+  version = "v0.3.3"
+
+[[projects]]
   branch = "subsystem"
   digest = "1:3317e00c2f1704922f57d800777dec0646b1488f0538fa0edade0f945b07493a"
   name = "github.com/gliderlabs/ssh"
@@ -35,12 +100,12 @@
   source = "github.com/DSpeichert/ssh"
 
 [[projects]]
-  digest = "1:3a26588bc48b96825977c1b3df964f8fd842cd6860cc26370588d3563433cf11"
+  digest = "1:236d7e1bdb50d8f68559af37dbcf9d142d56b431c9b2176d41e2a009b664cda8"
   name = "github.com/google/uuid"
   packages = ["."]
   pruneopts = "UT"
-  revision = "d460ce9f8df2e77fb1ba55ca87fafed96c607494"
-  version = "v1.0.0"
+  revision = "9b3b1e0f5f99ae461456d768e7d301a7acdaa2d8"
+  version = "v1.1.0"
 
 [[projects]]
   digest = "1:9cedee824c21326bd26950bd9e1ffe9dc4e7ca03dc8634d0e6f954ee6a383172"
@@ -99,12 +164,36 @@
   pruneopts = "UT"
   revision = "3d3f9f413869b949e48070b5bc593aa22cc2b8f2"
 
+[[projects]]
+  branch = "master"
+  digest = "1:3866deb325971ae774d5844b70f058923b7757cd2eec6db2bd6d028143f6b65f"
+  name = "golang.org/x/net"
+  packages = [
+    "context",
+    "context/ctxhttp",
+    "internal/socks",
+    "proxy",
+  ]
+  pruneopts = "UT"
+  revision = "adae6a3d119ae4890b46832a2e88a95adc62b8e7"
+
+[[projects]]
+  branch = "master"
+  digest = "1:68a4638398cf8c864a6aa50c8853ebe7935f939aa3acf7e44cb35b67852e9fef"
+  name = "golang.org/x/sys"
+  packages = ["windows"]
+  pruneopts = "UT"
+  revision = "0cf1ed9e522b7dbb416f080a5c8003de9b702bf4"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
     "github.com/apex/log",
     "github.com/codegangsta/cli",
+    "github.com/docker/docker/api/types",
+    "github.com/docker/docker/client",
+    "github.com/docker/docker/pkg/stdcopy",
     "github.com/gliderlabs/ssh",
     "github.com/google/uuid",
     "github.com/kr/fs",
@@ -112,6 +201,7 @@
     "github.com/mbndr/figlet4go",
     "github.com/pkg/errors",
     "github.com/pkg/sftp",
+    "golang.org/x/net/context",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

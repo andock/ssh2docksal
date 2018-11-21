@@ -1,4 +1,4 @@
-package docker_cli
+package docker_client
 
 import (
 	"fmt"

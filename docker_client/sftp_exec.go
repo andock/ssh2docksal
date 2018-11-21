@@ -1,4 +1,4 @@
-package docker_cli
+package docker_client
 
 import (
 	"github.com/apex/log"
@@ -10,38 +10,20 @@ import (
 	"strings"
 )
 
-func simpleExec(containerID string, command string ) error {
-	args := execGetBaseArgs(containerID)
-	args = append(args, command)
-	log.Debugf("Execute %s", command)
-	cmd := exec.Command("docker", args...)
-	err := cmd.Run()
-	if err != nil {
-		log.Errorf("Unable to execute %s", command)
-		log.WithError(err)
-	}
-	return err
-}
 
-func execGetBaseArgs(containerID string) []string {
-	args := []string{"exec"}
-	args = append(args, "-u")
-	args = append(args, "docker")
-	args = append(args, containerID)
-	args = append(args, "bash")
-	args = append(args, "-c")
-	return args
-}
-
-func (folder *dockerFile) execFileList(fs *root) ([]os.FileInfo, error) {
+func (folder *dockerFile) execFileList() ([]os.FileInfo, error) {
 	folderName := folder.name
-	args := execGetBaseArgs(folder.containerID)
-	args = append(args, "ls -a " + folderName)
-	cmd := exec.Command("docker", args...)
-	outputBytes, err := cmd.CombinedOutput()
-	names := strings.Split(string(outputBytes), "\n")
+
+
+	nameString, err := outpuExec(folder.containerID, "ls -al " + folderName)
+	names := strings.Split(nameString, "\n")
 	valid_names := []string{}
+	first := true
 	for _, fn := range names {
+		if (first) {
+			first = false
+			continue
+		}
 		if fn != "" && fn != "." && fn != ".." {
 			valid_names = append(valid_names, fn)
 		}
@@ -53,7 +35,8 @@ func (folder *dockerFile) execFileList(fs *root) ([]os.FileInfo, error) {
 		if folderName != "/" {
 			seperator = "/"
 		}
-		item, _ := fs.fetch(folderName + seperator + fn)
+		item, _ := createNewDockerFile(fn, folder.containerID)
+		item.name = folderName + seperator + item.name
 		list[i] = item
 
 	}
@@ -75,7 +58,7 @@ func (file *dockerFile) execFileUpload(localFile *os.File) error {
 
 func (file *dockerFile) execFileDownload(localFilePath string) error {
 	args := []string{"cp"}
-	args = append(args, file.containerID+":"+file.name)
+	args = append(args, file.containerID + ":" + file.name)
 	args = append(args, localFilePath)
 	cmd := exec.Command("docker", args...)
 	err := cmd.Run()
@@ -90,22 +73,17 @@ func (file *dockerFile) execFileCreate() error {
 	return simpleExec(file.containerID, "cd " + filepath.Dir(file.name) +"; touch " + file.Name())
 }
 
-func (fs *root) execFileInfo(fileName string, modifier string) (bool, error) {
-	args := execGetBaseArgs(fs.containerID)
-	args = append(args, "if [ -"+modifier+" "+fileName+" ]; then echo 1; else echo 0; fi")
-	cmd := exec.Command("docker", args...)
-	outputBytes, err := cmd.CombinedOutput()
-	if err != nil {
-		log.Errorf("Unable to get FileInfo for %s", fileName)
-		log.WithError(err)
+func (fs *root) execFileInfo(fileName string) (*dockerFile, error) {
+
+	output, err := outpuExec(fs.containerID, "ls -ald " + fileName)
+	if (err != nil) {
+		return nil, os.ErrNotExist
 	}
-	output := strings.TrimSpace(string(outputBytes))
-	if output == "1" {
-		return true, err
-	} else if output == "0" {
-		return false, err
+	lines := strings.Split(output, "\n")
+	for i := 0; i < len(lines); i++ {
+		return createNewDockerFile(lines[i], fs.containerID)
 	}
-	return false, err
+	return nil, os.ErrNotExist
 }
 
 func (file *dockerFile) execFileChmod( perm string) error {
@@ -129,6 +107,6 @@ func (file *dockerFile) execTruncate(size uint64) error {
 }
 
 func (folder *dockerFile) execMkDir(folderName string) error {
-	return simpleExec(folder.containerID, "cd "+folder.name+"; mkdir -p "+folderName)
+	return simpleExec(folder.containerID, "mkdir -p "+folder.name + "/" +folderName)
 }
 

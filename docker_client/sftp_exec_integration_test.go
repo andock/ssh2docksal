@@ -1,4 +1,4 @@
-package docker_cli
+package docker_client
 
 import (
 	"os"
@@ -14,6 +14,33 @@ func getReadOnlyTestContainerId() string {
 	return containerID
 }
 
+func TestExecFileInfo(t *testing.T) {
+	if !*testIntegration {
+		t.Skip("skipping integration test")
+	}
+
+	tests := []struct {
+		file     string
+		isDir   bool
+	}{
+
+		{file: "/usr/local/bin/php", isDir: false},
+		{file: "/usr/local/bin", isDir: true},
+	}
+	containerID := getTestContainerId()
+	root := getRoot(containerID)
+
+	for _, test := range tests {
+		file, _ := root.execFileInfo(test.file)
+		if file.IsDir() != test.isDir {
+			t.Errorf("IsDir %s should be %T", test.file, test.isDir)
+		}
+		if file.name != test.file {
+			t.Errorf("Filename: %s should be %s", test.file, file.name)
+		}
+
+	}
+}
 
 func TestFetch(t *testing.T) {
 	if !*testIntegration {
@@ -30,6 +57,9 @@ func TestFetch(t *testing.T) {
 	root := getRoot(containerID)
 	for _, test := range tests {
 		result, _ := root.fetch(test.file)
+		if (result == nil) {
+			t.Errorf("file %s should exists", test.file)
+		}
 		if test.isDir == true && result.IsDir() != true {
 			t.Errorf("%s should be a folder ", test.file)
 		}
@@ -48,7 +78,7 @@ func TestExecFileList(t *testing.T) {
 		file   string
 		result int
 	}{
-		{file: "/usr/local/bin", result: 26},
+		{file: "/usr/local/bin", result: 28},
 	}
 	containerID := getTestContainerId()
 	root := getRoot(containerID)
@@ -57,9 +87,12 @@ func TestExecFileList(t *testing.T) {
 		if (err != nil) {
 			t.Errorf("Fetch file: %s failed.", test.file)
 		}
-		result, _ := folder.execFileList(root)
+		result, _ := folder.execFileList()
 		if len(result) != test.result {
-			t.Errorf("Filelist: %s should be %b", test.file, test.result)
+			t.Errorf("Filelist: %s should be %T", test.file, test.result)
+		}
+		if len(result) != test.result {
+			t.Errorf("Filelist: %s should be %T", test.file, test.result)
 		}
 	}
 }
@@ -150,28 +183,4 @@ func TestExecRename(t *testing.T) {
 		}
 	}
 }
-func TestExecFileInfo(t *testing.T) {
-	if !*testIntegration {
-		t.Skip("skipping integration test")
-	}
 
-	tests := []struct {
-		file     string
-		result   bool
-		modifier string
-	}{
-		{file: "/usr/local/bin/php", modifier: "d", result: false},
-		{file: "/usr/local/bin/php", modifier: "f", result: true},
-		{file: "/usr/local/bin", modifier: "d", result: true},
-		{file: "/usr/local/bin", modifier: "f", result: false},
-	}
-	containerID := getTestContainerId()
-	root := getRoot(containerID)
-
-	for _, test := range tests {
-		result, _ := root.execFileInfo(test.file, test.modifier)
-		if result != test.result {
-			t.Errorf("File: %s with modifier %s should be %T", test.file, test.modifier, test.result)
-		}
-	}
-}

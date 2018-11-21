@@ -1,4 +1,4 @@
-package docker_cli
+package docker_client
 
 // sftp integration tests
 // enable with -integration
@@ -25,45 +25,10 @@ import (
 
 	"github.com/kr/fs"
 	"github.com/pkg/errors"
-	"sort"
 )
 
 const (
-	ssh_FX_OK                = 0
-	ssh_FX_EOF               = 1
-	ssh_FX_NO_SUCH_FILE      = 2
 	ssh_FX_PERMISSION_DENIED = 3
-	ssh_FX_FAILURE           = 4
-	ssh_FX_BAD_MESSAGE       = 5
-	ssh_FX_NO_CONNECTION     = 6
-	ssh_FX_CONNECTION_LOST   = 7
-	ssh_FX_OP_UNSUPPORTED    = 8
-
-	// see draft-ietf-secsh-filexfer-13
-	// https://tools.ietf.org/html/draft-ietf-secsh-filexfer-13#section-9.1
-	ssh_FX_INVALID_HANDLE              = 9
-	ssh_FX_NO_SUCH_PATH                = 10
-	ssh_FX_FILE_ALREADY_EXISTS         = 11
-	ssh_FX_WRITE_PROTECT               = 12
-	ssh_FX_NO_MEDIA                    = 13
-	ssh_FX_NO_SPACE_ON_FILESYSTEM      = 14
-	ssh_FX_QUOTA_EXCEEDED              = 15
-	ssh_FX_UNKNOWN_PRINCIPAL           = 16
-	ssh_FX_LOCK_CONFLICT               = 17
-	ssh_FX_DIR_NOT_EMPTY               = 18
-	ssh_FX_NOT_A_DIRECTORY             = 19
-	ssh_FX_INVALID_FILENAME            = 20
-	ssh_FX_LINK_LOOP                   = 21
-	ssh_FX_CANNOT_DELETE               = 22
-	ssh_FX_INVALID_PARAMETER           = 23
-	ssh_FX_FILE_IS_A_DIRECTORY         = 24
-	ssh_FX_BYTE_RANGE_LOCK_CONFLICT    = 25
-	ssh_FX_BYTE_RANGE_LOCK_REFUSED     = 26
-	ssh_FX_DELETE_PENDING              = 27
-	ssh_FX_FILE_CORRUPT                = 28
-	ssh_FX_OWNER_INVALID               = 29
-	ssh_FX_GROUP_INVALID               = 30
-	ssh_FX_NO_MATCHING_BYTE_RANGE_LOCK = 31
 )
 
 const (
@@ -71,7 +36,6 @@ const (
 	READWRITE               = false
 	NO_DELAY  time.Duration = 0
 
-	debuglevel = "ERROR" // set to "DEBUG" for debugging
 )
 
 var testIntegration = flag.Bool("integration", false, "perform integration tests against sftp server process")
@@ -612,7 +576,6 @@ func TestClientStatLink(t *testing.T) {
 }
 
 func TestClientRemove(t *testing.T) {
-	t.Skip("skipping intergration test. Remove is not supported right now")
 	sftp, cmd := testClient(t, READWRITE, NO_DELAY)
 	defer cmd.Wait()
 	defer sftp.Close()
@@ -630,7 +593,6 @@ func TestClientRemove(t *testing.T) {
 }
 
 func TestClientRemoveDir(t *testing.T) {
-	t.Skip("skipping intergration test. Remove is not supported right now")
 	sftp, cmd := testClient(t, READWRITE, NO_DELAY)
 	defer cmd.Wait()
 	defer sftp.Close()
@@ -648,7 +610,6 @@ func TestClientRemoveDir(t *testing.T) {
 }
 
 func TestClientRemoveFailed(t *testing.T) {
-	t.Skip("skipping intergration test. Remove is not supported right now")
 	sftp, cmd := testClient(t, READONLY, NO_DELAY)
 	defer cmd.Wait()
 	defer sftp.Close()
@@ -1342,28 +1303,7 @@ func contains(vector []string, s string) bool {
 	return false
 }
 
-var globTests = []struct {
-	pattern, result string
-}{
-	{"match.go", "match.go"},
-	{"mat?h.go", "match.go"},
-	{"ma*ch.go", "match.go"},
-	{"../*/match.go", "../sftp/match.go"},
-}
 
-type globTest struct {
-	pattern string
-	matches []string
-}
-
-func (test *globTest) buildWant(root string) []string {
-	var want []string
-	for _, m := range test.matches {
-		want = append(want, root+filepath.FromSlash(m))
-	}
-	sort.Strings(want)
-	return want
-}
 
 func TestMatch(t *testing.T) {
 	for _, tt := range matchTests {
