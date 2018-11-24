@@ -5,7 +5,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"sort"
 	"strconv"
 	"strings"
 )
@@ -14,39 +13,33 @@ import (
 func (folder *dockerFile) execFileList() ([]os.FileInfo, error) {
 	folderName := folder.name
 
-
 	nameString, err := outpuExec(folder.containerID, "ls -al " + folderName)
 	names := strings.Split(nameString, "\n")
-	valid_names := []string{}
+	validItems := []os.FileInfo{}
 	first := true
 	for _, fn := range names {
-		if (first) {
+		if first {
 			first = false
 			continue
 		}
-		if fn != "" && fn != "." && fn != ".." {
-			valid_names = append(valid_names, fn)
-		}
-	}
-	sort.Strings(valid_names)
-	list := make([]os.FileInfo, len(valid_names))
-	for i, fn := range valid_names {
-		seperator := ""
-		if folderName != "/" {
-			seperator = "/"
-		}
 		item, _ := createNewDockerFile(fn, folder.containerID)
-		item.name = folderName + seperator + item.name
-		list[i] = item
-
+		if item.name != "" && item.name != "." && item.name != ".." {
+			seperator := ""
+			if folderName != "/" {
+				seperator = "/"
+			}
+			item.name = folderName + seperator + item.name
+			validItems = append(validItems, item)
+		}
 	}
-	return list, err
+
+	return validItems, err
 }
 
 func (file *dockerFile) execFileUpload(localFile *os.File) error {
 	args := []string{"cp"}
 	args = append(args, localFile.Name())
-	args = append(args, file.containerID+":"+file.name)
+	args = append(args, file.containerID + ":" + file.name)
 	cmd := exec.Command("docker", args...)
 	err := cmd.Run()
 	if err != nil {
@@ -74,9 +67,11 @@ func (file *dockerFile) execFileCreate() error {
 }
 
 func (fs *root) execFileInfo(fileName string) (*dockerFile, error) {
-
-	output, err := outpuExec(fs.containerID, "ls -ald " + fileName)
-	if (err != nil) {
+	output, err := outpuExec(fs.containerID, "if [ -e '" + fileName + "' ]; then ls -ald '" + fileName + "'; fi")
+	if err != nil {
+		return nil, err
+	}
+	if output == "" {
 		return nil, os.ErrNotExist
 	}
 	lines := strings.Split(output, "\n")
@@ -92,7 +87,7 @@ func (file *dockerFile) execFileChmod( perm string) error {
 
 func (file *dockerFile) remove() error {
 	flag := " "
-	if (file.IsDir()) {
+	if file.IsDir() {
 		flag =" -r "
 	}
 	return simpleExec(file.containerID, "rm" + flag + file.name)

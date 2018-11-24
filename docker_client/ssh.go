@@ -1,19 +1,21 @@
 package docker_client
 
 import (
-	"fmt"
 	"github.com/andock/ssh2docksal"
 	"github.com/apex/log"
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/client"
+	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/gliderlabs/ssh"
-	"github.com/kr/pty"
-	"github.com/mbndr/figlet4go"
 	"github.com/pkg/sftp"
+	"golang.org/x/net/context"
 	"io"
 	"os"
-	"os/exec"
 	"strings"
-	"sync"
 	"syscall"
+	"time"
 	"unsafe"
 )
 
@@ -31,130 +33,120 @@ func (a *CliDockerHandler) SftpHandler(containerID string) sftp.Handlers {
 }
 
 func (a *CliDockerHandler) Find(containerName string) (string, error) {
-
-	findExecResult := exec.Command("docker", "ps", fmt.Sprintf("--filter=name=%s$", containerName), "--quiet", "--no-trunc")
-	buf, err := findExecResult.CombinedOutput()
+	cli, err := client.NewEnvClient()
 	if err != nil {
-		log.Errorf("docker ps ... failed: %v", err)
 		return "", err
 	}
-	existingContainer := strings.TrimSpace(string(buf))
-	if existingContainer == "" {
-		log.Errorf("Container: %s not found", containerName)
-		return "", fmt.Errorf("container %s not found", containerName)
+	args, err := filters.ParseFlag("name="+containerName, filters.NewArgs())
+	if err != nil {
+		return "", err
 	}
-	return existingContainer, nil
+	options := types.ContainerListOptions{Filters: args}
+	containers, err := cli.ContainerList(context.Background(), options)
+	if err != nil {
+		return "", err
+	}
+	if len(containers) == 1 {
+		container := containers[0]
+		return container.ID, nil
+	}
+
+	return "", nil
+}
+
+func dockerExec(containerID string, command string, cfg container.Config, sess ssh.Session) (status int, err error) {
+	status = 255
+	ctx := context.Background()
+	docker, err :=  client.NewEnvClient()
+	if err != nil {
+		log.Errorf("Couldn't connect to docker")
+		return status, err
+	}
+
+	execStartCheck := types.ExecConfig{
+		Tty: cfg.Tty,
+	}
+
+	ec := types.ExecConfig{
+		AttachStdout: cfg.AttachStdout,
+		AttachStdin:  cfg.AttachStdin,
+		AttachStderr: cfg.AttachStderr,
+		Detach:       false,
+		Tty:          cfg.Tty,
+	}
+	ec.Cmd = append(ec.Cmd, "/bin/bash")
+	if command != "" {
+		ec.Cmd = append(ec.Cmd, "-lc")
+		ec.Cmd = append(ec.Cmd, command)
+	}
+	ec.User = "docker"
+	eresp, err := docker.ContainerExecCreate(context.Background(), containerID, ec)
+	if err != nil {
+		log.Errorf("docker.ContainerExecCreate: ", err)
+		return
+	}
+
+	stream, err := docker.ContainerExecAttach(ctx, eresp.ID, execStartCheck)
+	if err != nil {
+		log.Errorf("docker.ContainerExecAttach: ", err)
+		return
+	}
+	defer stream.Close()
+
+	outputErr := make(chan error)
+
+	go func() {
+		var err error
+		if cfg.Tty {
+			_, err = io.Copy(sess, stream.Reader)
+		} else {
+			_, err = stdcopy.StdCopy(sess, sess.Stderr(), stream.Reader)
+		}
+		outputErr <- err
+	}()
+
+	go func() {
+		defer stream.CloseWrite()
+		io.Copy(stream.Conn, sess)
+	}()
+
+	if cfg.Tty {
+		_, winCh, _ := sess.Pty()
+		go func() {
+			for win := range winCh {
+				err := docker.ContainerExecResize(ctx, eresp.ID, types.ResizeOptions{
+					Height: uint(win.Height),
+					Width:  uint(win.Width),
+				})
+				if err != nil {
+					log.WithError(err)
+					break
+				}
+			}
+		}()
+	}
+	for {
+		inspect, err := docker.ContainerExecInspect(ctx, eresp.ID)
+		if err != nil {
+			log.WithError(err)
+		}
+		if !inspect.Running {
+			status = inspect.ExitCode
+			break
+		}
+		time.Sleep(time.Second)
+	}
+	return
 }
 
 func (a *CliDockerHandler) Execute(containerID string, s ssh.Session, c ssh2docksal.Config) {
-	var entrypoint = "/bin/bash"
-	var command = s.Command()
-	var joinedArgs string
 
-	var isPty bool
-	_, _, isPty = s.Pty()
-
-	// Attaching to an existing container
-	args := []string{"exec"}
-	args = append(args, "-u")
-	args = append(args, "docker")
-	args = append(args, "-i")
-
-	if isPty {
-		args = append(args, "-t")
-	}
-
-	args = append(args, containerID)
-	if entrypoint != "" {
-		args = append(args, entrypoint)
-	}
-	isScp := false
-	if len(command) != 0 {
-		args = append(args, "-lc")
-		args = append(args, strings.Join(command, " "))
-		isScp = (command[0] == "rsync" || command[0] == "scp")
-	}
-	joinedArgs = strings.Join(args, " ")
-	log.Debugf("Executing 'docker %s'", joinedArgs)
-	if isPty {
-		executePtyCommand("docker", args, s, c)
-	} else {
-		executeCommand("docker", args, s, isScp)
-	}
-	log.Debugf("Executing done")
-}
-
-func executeCommand(name string, args []string, s ssh.Session, isScp bool) {
-	cmd := exec.Command(name, args...)
-	log.Debugf("executeCommand started. Mode:  %s\n")
-
-	if !isScp {
-		cmd.Stdout = s
-		cmd.Stderr = s
-	}
-	if isScp {
-		stdin, err := cmd.StdinPipe()
-		if err != nil {
-			log.Warnf("Could not open stdin pipe of command: %s\n", err)
-			s.Exit(255)
-			return
-		}
-
-		stdout, err := cmd.StdoutPipe()
-		if err != nil {
-			log.Warnf("Could not open stdout pipe of command: %s\n", err)
-			s.Exit(255)
-			return
-		}
-
-		close := func() {
-			s.Exit(0)
-		}
-		var once sync.Once
-		go func() {
-			io.Copy(stdin, s)
-			once.Do(close)
-		}()
-		go func() {
-			io.Copy(s, stdout)
-			once.Do(close)
-		}()
-	}
-	cmd.Run()
-	log.Debugf("executeCommand completed")
-}
-
-func executePtyCommand(name string, args []string, s ssh.Session, c ssh2docksal.Config) {
-	ptyReq, winCh, _ := s.Pty()
-	cmd := exec.Command(name, args...)
-
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Setctty: true,
-		Setsid:  true,
-	}
-	cmd.Stdout = s
-	cmd.Stdin = s
-	cmd.Stderr = s
-
-	ascii := figlet4go.NewAsciiRender()
-	renderStr, _ := ascii.Render(c.WelcomeMessage)
-	fmt.Fprintf(s, "%s\n\r", renderStr)
-
-	cmd.Env = append(cmd.Env, fmt.Sprintf("TERM=%s", ptyReq.Term))
-	f, err := pty.Start(cmd)
+	//containerID string, command string, cfg *container.Config, sess ssh.Session)
+	_, _, isPty := s.Pty()
+	cfg := container.Config{AttachStdin: true, AttachStderr: true, AttachStdout: true, Tty: isPty}
+	_, err := dockerExec(containerID, strings.Join(s.Command(), " "), cfg, s)
 	if err != nil {
-		panic(err)
+		s.Exit(255)
 	}
-	go func() {
 
-		for win := range winCh {
-			setWinsize(f, win.Width, win.Height)
-		}
-	}()
-	go func() {
-		io.Copy(f, s) // stdin
-	}()
-	io.Copy(s, f) // stdout
-	cmd.Wait()
-	s.Exit(0)
 }

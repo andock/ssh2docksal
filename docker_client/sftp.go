@@ -18,6 +18,7 @@ import (
 	"time"
 )
 
+
 func getRoot(containerID string) *root {
 	root := &root{
 		files:       make(map[string]*dockerFile),
@@ -92,9 +93,9 @@ func (fs *root) Filecmd(r *sftp.Request) error {
 	case "Setstat":
 		// CHMOD
 		attrFlags := r.AttrFlags()
-		if (attrFlags.Permissions) {
+		if attrFlags.Permissions {
 			file, err := fs.fetch(r.Filepath)
-			if (err != nil) {
+			if err != nil {
 				return err
 			}
 			fileStat := r.Attributes()
@@ -204,7 +205,6 @@ type root struct {
 	*dockerFile
 	files       map[string]*dockerFile
 	filesLock   sync.Mutex
-
 	containerID string
 }
 
@@ -246,13 +246,13 @@ func createNewDockerFile(lsString string, containerID string) (*dockerFile, erro
 	isDirString := parts[0][0:1]
 	isDir:=false
 	nameIdentifier := 8
-	if (isDirString == "d") {
+	if isDirString == "d" {
 		isDir = true
 		nameIdentifier = 8
 	}
 	size := parts[4]
 	name := strings.Join(parts[nameIdentifier:len(parts)], " ")
-	if (strings.Index(name, " ") != -1) {
+	if strings.Index(name, " ") != -1 {
 		name = name + ""
 	}
 	file := newDockerFile(name, isDir, containerID)

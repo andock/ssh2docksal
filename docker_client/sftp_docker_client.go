@@ -7,8 +7,8 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/stdcopy"
-	"strings"
 	"golang.org/x/net/context"
+	"strings"
 )
 
 func simpleExec(containerID string, command string ) ( error) {
@@ -39,7 +39,7 @@ func outpuExec(containerID string, command string) (string, error) {
 	//ob, err := ioutil.ReadAll(conection.Reader)
 	output := strings.TrimSpace(stdoutput.String())
 	errorString := stderror.String()
-	if (errorString != "") {
+	if errorString != "" {
 		err :=fmt.Errorf(errorString)
 		log.Errorf("Unable to execute %s", command)
 		log.WithError(err)
@@ -51,3 +51,4 @@ func outpuExec(containerID string, command string) (string, error) {
 
 	return output, nil
 }
+

@@ -11,7 +11,7 @@
 
 @test "drush ssh" {
   expect drush_ssh.sh
-  run 'curl -sL -I  http://ssh2docksal-source.docksal | grep "HTTP/1.1 200 OK"'
+  run 'curl -sL -I  http://ssh2docksal-source.docksal/drush.txt | grep "HTTP/1.1 200 OK"'
   [[ "$output" =~ "HTTP/1.1 200 OK" ]]
 }
 

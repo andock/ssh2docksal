@@ -22,23 +22,31 @@ func TestExecFileInfo(t *testing.T) {
 	tests := []struct {
 		file     string
 		isDir   bool
+		error error
 	}{
 
-		{file: "/usr/local/bin/php", isDir: false},
-		{file: "/usr/local/bin", isDir: true},
+		{file: "/usr/local/bin/php", isDir: false, error: nil},
+		{file: "/usr/local/bin", isDir: true, error: nil},
+		{file: "/usr/local/NOTEXIST", isDir: true, error: os.ErrNotExist},
 	}
+
 	containerID := getTestContainerId()
 	root := getRoot(containerID)
 
 	for _, test := range tests {
-		file, _ := root.execFileInfo(test.file)
-		if file.IsDir() != test.isDir {
-			t.Errorf("IsDir %s should be %T", test.file, test.isDir)
+		file, err := root.execFileInfo(test.file)
+		if err != test.error {
+			t.Errorf("Lookup for %s should be result in an error", test.file)
+			continue
 		}
-		if file.name != test.file {
-			t.Errorf("Filename: %s should be %s", test.file, file.name)
+		if err == nil {
+			if file.IsDir() != test.isDir {
+				t.Errorf("IsDir %s should be %T", test.file, test.isDir)
+			}
+			if file.name != test.file {
+				t.Errorf("Filename: %s should be %s", test.file, file.name)
+			}
 		}
-
 	}
 }
 
@@ -78,7 +86,7 @@ func TestExecFileList(t *testing.T) {
 		file   string
 		result int
 	}{
-		{file: "/usr/local/bin", result: 28},
+		{file: "/usr/local/bin", result: 26},
 	}
 	containerID := getTestContainerId()
 	root := getRoot(containerID)

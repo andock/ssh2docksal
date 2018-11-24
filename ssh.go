@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-// DockerClientInterface for differnt docker clients
+// DockerClientInterface for different docker clients
 type dockerClientInterface interface {
 	Execute(containerID string, s ssh.Session, c Config)
 	Find(containerName string) (string, error)
