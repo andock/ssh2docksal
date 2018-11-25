@@ -10,7 +10,7 @@
 }
 
 @test "drush ssh" {
-  expect drush_ssh.sh
+  expect drush_ssh.expect
   run 'curl -sL -I  http://ssh2docksal-source.docksal/drush.txt | grep "HTTP/1.1 200 OK"'
   [[ "$output" =~ "HTTP/1.1 200 OK" ]]
 }

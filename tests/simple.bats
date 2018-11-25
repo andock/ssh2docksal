@@ -12,9 +12,9 @@
 }
 
 @test "Test tty" {
-  expect tty.sh
-  run ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ssh2docksal_target@192.168.64.100 -p 2222 ls tty.txt
-  [[ "$output" =~ "tty.txt" ]]
+  expect simple_tty.expect
+  run ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ssh2docksal_target@192.168.64.100 -p 2222 ls simple_tty.txt
+  [[ "$output" =~ "simple_tty.txt" ]]
 }
 
 @test "Test scp download" {
