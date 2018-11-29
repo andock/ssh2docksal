@@ -1,7 +1,7 @@
 #!/bin/bash
 docker run \
 -d \
--u docker
+-u docker \
 -v /var/run/docker.sock:/var/run/docker.sock \
 -v /usr/bin/docker:/usr/bin/docker \
 --name ssh2docksal \
