@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/andock/ssh2docksal"
-	"github.com/andock/ssh2docksal/docker_client"
+	"github.com/andock/ssh2docksal/client"
 	"github.com/apex/log"
 	"github.com/codegangsta/cli"
 	"github.com/gliderlabs/ssh"
@@ -32,12 +32,15 @@ func StartServer(c *cli.Context) {
 	if c.Bool("verbose") {
 		level = log.DebugLevel
 	}
-	level = log.DebugLevel
 	log.SetLevel(level)
 
-	sshHandler := &docker_client.CliDockerHandler{}
+	sshHandler := &client.CliDockerHandler{}
 
-	ssh2docksal.SSHHandler(sshHandler, ssh2docksal.Config{WelcomeMessage: c.String("welcome-message")})
+
+	ssh2docksal.SSHHandler(sshHandler, ssh2docksal.Config {
+		WelcomeMessage: c.String("welcome-message"),
+	})
+
 	bindPort := c.String("bind")
 	log.Info("Starting ssh server on port " + bindPort)
 	log.WithError(ssh.ListenAndServe(bindPort, nil, authorization))

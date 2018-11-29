@@ -147,6 +147,14 @@
   version = "v1.0.0"
 
 [[projects]]
+  digest = "1:808cdddf087fb64baeae67b8dfaee2069034d9704923a3cb8bd96a995421a625"
+  name = "github.com/patrickmn/go-cache"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "a3647f8e31d79543b2d0f0ae2fe5c379d72cedc0"
+  version = "v2.1.0"
+
+[[projects]]
   digest = "1:e39a5ee8fcbec487f8fc68863ef95f2b025e0739b0e4aa55558a2b4cf8f0ecf0"
   name = "github.com/pierrec/lz4"
   packages = [
@@ -246,6 +254,7 @@
     "github.com/gliderlabs/ssh",
     "github.com/kr/fs",
     "github.com/mholt/archiver",
+    "github.com/patrickmn/go-cache",
     "github.com/pkg/errors",
     "github.com/pkg/sftp",
     "golang.org/x/net/context",

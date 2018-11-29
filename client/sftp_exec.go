@@ -1,4 +1,4 @@
-package docker_client
+package client
 
 import (
 	"archive/tar"
@@ -14,7 +14,7 @@ import (
 	"strings"
 )
 
-func (folder *dockerFile) execFileList() ([]os.FileInfo, error) {
+func (folder *dockerFile) execFileList(fs *root) ([]os.FileInfo, error) {
 	folderName := folder.name
 
 	nameString, err := outpuExec(folder.containerID, "ls -al "+folderName)
@@ -33,6 +33,7 @@ func (folder *dockerFile) execFileList() ([]os.FileInfo, error) {
 				seperator = "/"
 			}
 			item.name = folderName + seperator + item.name
+			fs.files[item.name] = item
 			validItems = append(validItems, item)
 		}
 	}

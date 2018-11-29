@@ -1,4 +1,4 @@
-package docker_client
+package client
 
 // sftp request server connects to docker container.
 
@@ -112,16 +112,21 @@ func (fs *root) Filecmd(r *sftp.Request) error {
 		if err != nil {
 			return err
 		}
+		fs.files[r.Target] = fs.files[r.Filepath]
+		delete(fs.files, r.Filepath)
 	case "Rmdir", "Remove":
 		file, err := fs.fetch(r.Filepath)
 		if err != nil {
 			return err
 		}
-		err = file.execRemove()
-		if err != nil {
-			return err
-		}
-		delete(fs.files, r.Filepath)
+		go func() {
+			fs.contentLock.Lock()
+			file.execRemove()
+			defer fs.contentLock.Unlock()
+		}()
+
+		file.deleted = true
+		//delete(fs.files, r.Filepath)
 	case "Mkdir":
 		folder, err := fs.fetch(filepath.Dir(r.Filepath))
 		if err != nil {
@@ -131,7 +136,7 @@ func (fs *root) Filecmd(r *sftp.Request) error {
 		if err != nil {
 			return err
 		}
-		newDockerFile(r.Filepath, true, folder.containerID)
+		fs.files[r.Filepath] = newDockerFile(r.Filepath, true, folder.containerID)
 	case "Symlink":
 		// Not implemented
 	}
@@ -166,7 +171,9 @@ func (fs *root) Filelist(r *sftp.Request) (sftp.ListerAt, error) {
 		if err != nil {
 			return nil, err
 		}
-		list, err := parent.execFileList()
+		list, err := parent.execFileList(fs)
+
+
 		return listerat(list), err
 	case "Stat":
 		file, err := fs.fetch(path)
@@ -203,6 +210,9 @@ func (fs *root) fetch(path string) (*dockerFile, error) {
 		return fs.dockerFile, nil
 	}
 	if file, ok := fs.files[path]; ok {
+		if file.deleted == true {
+			return nil, os.ErrNotExist
+		}
 		return file, nil
 	}
 
@@ -225,6 +235,7 @@ type dockerFile struct {
 	content     []byte
 	contentLock sync.RWMutex
 	containerID string
+	deleted 	bool
 }
 
 func createNewDockerFile(lsString string, containerID string) (*dockerFile, error) {
@@ -334,36 +345,4 @@ func (f *dockerFile) WriteAt(p []byte, off int64) (int, error) {
 		}
 	}
 	return len(p), nil
-/*
-	n := 0
-	if len(p) != 0 {
-		f.tmpFile.WriteAt(p, off)
-		tmpDirPath, err := ioutil.TempDir("", "ssh2docksal")
-		tmpFilePath := tmpDirPath + "/" + f.Name()
-		tmpTarPath := tmpFilePath + ".tar"
-		tmpFile, err := os.Create(tmpFilePath)
-		bytes,err := ioutil.ReadAll(f.tmpFile)
-		n, err = tmpFile.Write(bytes)
-
-		if err != nil {
-			return 0, err
-		}
-		err = archiver.Archive([]string{tmpFilePath}, tmpTarPath)
-		if err != nil {
-			return 0, err
-		}
-		tarFile, err := os.Open(tmpTarPath)
-		if err != nil {
-			return 0, err
-		}
-		err = f.execFileUpload(tarFile)
-		os.Remove(tmpDirPath)
-		return n, err
-
-	} else {
-		f.content.Write(p)
-		err := f.execFileCreate()
-		return n, err
-	}
-*/
 }

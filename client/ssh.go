@@ -1,4 +1,4 @@
-package docker_client
+package client
 
 import (
 	"fmt"
@@ -27,6 +27,7 @@ func (a *CliDockerHandler) SftpHandler(containerID string) sftp.Handlers {
 
 // Find lookups for container id  by given container name
 func (a *CliDockerHandler) Find(containerName string) (string, error) {
+	
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		return "", err

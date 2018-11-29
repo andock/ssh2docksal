@@ -1,4 +1,4 @@
-package docker_client
+package client
 
 import (
 	"github.com/mholt/archiver"
@@ -96,7 +96,7 @@ func TestExecFileList(t *testing.T) {
 		if err != nil {
 			t.Errorf("Fetch file: %s failed.", test.file)
 		}
-		result, _ := folder.execFileList()
+		result, _ := folder.execFileList(root)
 		if len(result) != test.result {
 			t.Errorf("Filelist: %s should be %T", test.file, test.result)
 		}
