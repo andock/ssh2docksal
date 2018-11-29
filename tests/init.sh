@@ -42,3 +42,5 @@ cp ssh2docksal.aliases.drushrc.php ssh2docksal_source/drush/
 
 #  ==================  Start ssh2docksal docker image ==============================
 ./startup.sh
+
+docker ps
