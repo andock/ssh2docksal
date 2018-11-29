@@ -32,6 +32,7 @@ func StartServer(c *cli.Context) {
 	if c.Bool("verbose") {
 		level = log.DebugLevel
 	}
+	level = log.DebugLevel
 	log.SetLevel(level)
 
 	sshHandler := &docker_client.CliDockerHandler{}
@@ -47,7 +48,7 @@ func main() {
 	app := cli.NewApp()
 	app.Author = "Christian Wiedemann"
 	app.Email = "christian.wiedemann@key-tec.de"
-	app.Version = "0.0.9"
+	app.Version = "0.0.10"
 	app.Usage = "SSH to docksal"
 
 	app.Flags = []cli.Flag{

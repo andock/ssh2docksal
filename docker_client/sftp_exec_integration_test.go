@@ -124,11 +124,9 @@ func TestExecFileUpload(t *testing.T) {
 	for _, test := range tests {
 		targetFile := newDockerFile(test.targetFile, false, containerID)
 
-		if _, err := os.Stat(test.sourceFile + ".tar"); os.IsNotExist(err) {
-			os.Remove(test.sourceFile + ".tar")
-		}
+		os.Remove(test.sourceFile + ".tar")
 
-		error := archiver.Archive([]string{test.sourceFile}, test.sourceFile+".tar")
+		error := archiver.Archive([]string{test.sourceFile}, test.sourceFile + ".tar")
 
 		if error != nil {
 			t.Errorf("Unable to tar file %s ", test.sourceFile)

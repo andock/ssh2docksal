@@ -51,6 +51,7 @@ func (file *dockerFile) execFileDownload() error {
 	if err != nil {
 		log.Errorf("Unable to download %s", file.containerID+":"+file.name)
 		log.WithError(err)
+		return err
 	}
 	reader, _, err := cli.CopyFromContainer(context.Background(), file.containerID, file.name)
 	tr := tar.NewReader(reader)

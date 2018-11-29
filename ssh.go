@@ -38,6 +38,7 @@ func getContainerID(client dockerClientInterface, username string) (string, erro
 // SSHHandler handles the ssh connection
 func SSHHandler(sshHandler dockerClientInterface, c Config) {
 	ssh.Handle(func(s ssh.Session) {
+		log.Debugf("Looking for  container %s", s.User())
 		existingContainer, err := getContainerID(sshHandler, s.User())
 
 		if existingContainer == "" {
