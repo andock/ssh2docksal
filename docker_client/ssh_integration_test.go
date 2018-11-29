@@ -4,7 +4,6 @@ import (
 	"testing"
 )
 
-
 func TestCliDockerHandler_Find(t *testing.T) {
 	if !*testIntegration {
 		t.Skip("skipping integration test")
@@ -18,4 +17,3 @@ func TestCliDockerHandler_Find(t *testing.T) {
 		t.Errorf("unexpected empty container id")
 	}
 }
-

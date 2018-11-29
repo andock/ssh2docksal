@@ -1,6 +1,7 @@
 package docker_client
 
 import (
+	"fmt"
 	"github.com/andock/ssh2docksal"
 	"github.com/apex/log"
 	"github.com/docker/docker/api/types"
@@ -12,26 +13,19 @@ import (
 	"github.com/pkg/sftp"
 	"golang.org/x/net/context"
 	"io"
-	"os"
 	"strings"
-	"syscall"
 	"time"
-	"unsafe"
 )
 
-func setWinsize(f *os.File, w, h int) {
-	syscall.Syscall(syscall.SYS_IOCTL, f.Fd(), uintptr(syscall.TIOCSWINSZ),
-		uintptr(unsafe.Pointer(&struct{ h, w, x, y uint16 }{uint16(h), uint16(w), 0, 0})))
-}
-
-// CliDockerClient is
 type CliDockerHandler struct {
 }
 
+// SftpHandler returns the associated sftp docker handler.
 func (a *CliDockerHandler) SftpHandler(containerID string) sftp.Handlers {
 	return DockerCliSftpHandler(containerID)
 }
 
+// Find lookups for container id  by given container name
 func (a *CliDockerHandler) Find(containerName string) (string, error) {
 	cli, err := client.NewEnvClient()
 	if err != nil {
@@ -48,16 +42,19 @@ func (a *CliDockerHandler) Find(containerName string) (string, error) {
 	}
 	if len(containers) == 1 {
 		container := containers[0]
+		if container.State != "running" {
+			return "", fmt.Errorf("container %s is not running. Run fin up.", containerName)
+		}
 		return container.ID, nil
 	}
 
-	return "", nil
+	return "", fmt.Errorf("Unable to open container %s. Propably the container is not up. Run fin up.", containerName)
 }
 
 func dockerExec(containerID string, command string, cfg container.Config, sess ssh.Session) (status int, err error) {
 	status = 255
 	ctx := context.Background()
-	docker, err :=  client.NewEnvClient()
+	docker, err := client.NewEnvClient()
 	if err != nil {
 		log.Errorf("Couldn't connect to docker")
 		return status, err
@@ -75,10 +72,12 @@ func dockerExec(containerID string, command string, cfg container.Config, sess s
 		Tty:          cfg.Tty,
 	}
 	ec.Cmd = append(ec.Cmd, "/bin/bash")
+
 	if command != "" {
 		ec.Cmd = append(ec.Cmd, "-lc")
 		ec.Cmd = append(ec.Cmd, command)
 	}
+
 	ec.User = "docker"
 	eresp, err := docker.ContainerExecCreate(context.Background(), containerID, ec)
 	if err != nil {
@@ -139,9 +138,8 @@ func dockerExec(containerID string, command string, cfg container.Config, sess s
 	return
 }
 
+// Execute executes command inside docker
 func (a *CliDockerHandler) Execute(containerID string, s ssh.Session, c ssh2docksal.Config) {
-
-	//containerID string, command string, cfg *container.Config, sess ssh.Session)
 	_, _, isPty := s.Pty()
 	cfg := container.Config{AttachStdin: true, AttachStderr: true, AttachStdout: true, Tty: isPty}
 	_, err := dockerExec(containerID, strings.Join(s.Command(), " "), cfg, s)

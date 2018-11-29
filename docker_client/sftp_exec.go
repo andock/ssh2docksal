@@ -1,19 +1,23 @@
 package docker_client
 
 import (
+	"archive/tar"
 	"github.com/apex/log"
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/client"
+	"golang.org/x/net/context"
+	"io"
+	"io/ioutil"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
 )
 
-
 func (folder *dockerFile) execFileList() ([]os.FileInfo, error) {
 	folderName := folder.name
 
-	nameString, err := outpuExec(folder.containerID, "ls -al " + folderName)
+	nameString, err := outpuExec(folder.containerID, "ls -al "+folderName)
 	names := strings.Split(nameString, "\n")
 	validItems := []os.FileInfo{}
 	first := true
@@ -36,38 +40,48 @@ func (folder *dockerFile) execFileList() ([]os.FileInfo, error) {
 	return validItems, err
 }
 
-func (file *dockerFile) execFileUpload(localFile *os.File) error {
-	args := []string{"cp"}
-	args = append(args, localFile.Name())
-	args = append(args, file.containerID + ":" + file.name)
-	cmd := exec.Command("docker", args...)
-	err := cmd.Run()
-	if err != nil {
-		log.Errorf("Unable to upload %s", localFile.Name())
-		log.WithError(err)
-	}
+func (file *dockerFile) execFileUpload(tarFile *os.File) error {
+	cli, err := client.NewEnvClient()
+	err = cli.CopyToContainer(context.Background(), file.containerID, filepath.Dir(file.name), tarFile, types.CopyToContainerOptions{})
 	return err
 }
 
-func (file *dockerFile) execFileDownload(localFilePath string) error {
-	args := []string{"cp"}
-	args = append(args, file.containerID + ":" + file.name)
-	args = append(args, localFilePath)
-	cmd := exec.Command("docker", args...)
-	err := cmd.Run()
+func (file *dockerFile) execFileDownload() error {
+	cli, err := client.NewEnvClient()
 	if err != nil {
-		log.Errorf("Unable to download %s", file.containerID + ":" + file.name)
+		log.Errorf("Unable to download %s", file.containerID+":"+file.name)
 		log.WithError(err)
 	}
-	return err
+	reader, _, err := cli.CopyFromContainer(context.Background(), file.containerID, file.name)
+	tr := tar.NewReader(reader)
+	for {
+
+		_, err := tr.Next()
+		if err == io.EOF {
+			// end of tar archive
+			break
+		}
+		if err != nil {
+			log.WithError(err)
+			return err
+		}
+
+		bytes, err := ioutil.ReadAll(tr)
+		if err != nil {
+			log.WithError(err)
+			return err
+		}
+		file.content = bytes
+	}
+	return nil
 }
 
 func (file *dockerFile) execFileCreate() error {
-	return simpleExec(file.containerID, "cd " + filepath.Dir(file.name) +"; touch " + file.Name())
+	return simpleExec(file.containerID, "cd "+filepath.Dir(file.name)+"; touch "+file.Name())
 }
 
 func (fs *root) execFileInfo(fileName string) (*dockerFile, error) {
-	output, err := outpuExec(fs.containerID, "if [ -e '" + fileName + "' ]; then ls -ald '" + fileName + "'; fi")
+	output, err := outpuExec(fs.containerID, "if [ -e '"+fileName+"' ]; then ls -ald '"+fileName+"'; fi")
 	if err != nil {
 		return nil, err
 	}
@@ -81,16 +95,16 @@ func (fs *root) execFileInfo(fileName string) (*dockerFile, error) {
 	return nil, os.ErrNotExist
 }
 
-func (file *dockerFile) execFileChmod( perm string) error {
-	return simpleExec(file.containerID, "chmod " + string(perm) + " " + file.name )
+func (file *dockerFile) execFileChmod(perm string) error {
+	return simpleExec(file.containerID, "chmod "+string(perm)+" "+file.name)
 }
 
-func (file *dockerFile) remove() error {
+func (file *dockerFile) execRemove() error {
 	flag := " "
 	if file.IsDir() {
-		flag =" -r "
+		flag = " -r "
 	}
-	return simpleExec(file.containerID, "rm" + flag + file.name)
+	return simpleExec(file.containerID, "rm"+flag+file.name)
 }
 
 func (file *dockerFile) execFileRename(targetName string) error {
@@ -98,10 +112,9 @@ func (file *dockerFile) execFileRename(targetName string) error {
 }
 
 func (file *dockerFile) execTruncate(size uint64) error {
-	return simpleExec(file.containerID, "truncate -s " + strconv.FormatUint(size, 10) + " " + file.name)
+	return simpleExec(file.containerID, "truncate -s "+strconv.FormatUint(size, 10)+" "+file.name)
 }
 
 func (folder *dockerFile) execMkDir(folderName string) error {
-	return simpleExec(folder.containerID, "mkdir -p "+folder.name + "/" +folderName)
+	return simpleExec(folder.containerID, "mkdir -p "+folder.name+"/"+folderName)
 }
-

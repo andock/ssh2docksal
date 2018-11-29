@@ -1,6 +1,7 @@
 package docker_client
 
 import (
+	"github.com/mholt/archiver"
 	"os"
 	"testing"
 )
@@ -20,8 +21,8 @@ func TestExecFileInfo(t *testing.T) {
 	}
 
 	tests := []struct {
-		file     string
-		isDir   bool
+		file  string
+		isDir bool
 		error error
 	}{
 
@@ -65,7 +66,7 @@ func TestFetch(t *testing.T) {
 	root := getRoot(containerID)
 	for _, test := range tests {
 		result, _ := root.fetch(test.file)
-		if (result == nil) {
+		if result == nil {
 			t.Errorf("file %s should exists", test.file)
 		}
 		if test.isDir == true && result.IsDir() != true {
@@ -91,8 +92,8 @@ func TestExecFileList(t *testing.T) {
 	containerID := getTestContainerId()
 	root := getRoot(containerID)
 	for _, test := range tests {
-		folder,err := root.fetch(test.file)
-		if (err != nil) {
+		folder, err := root.fetch(test.file)
+		if err != nil {
 			t.Errorf("Fetch file: %s failed.", test.file)
 		}
 		result, _ := folder.execFileList()
@@ -113,7 +114,6 @@ func TestExecFileUpload(t *testing.T) {
 	tests := []struct {
 		sourceFile string
 		targetFile string
-
 	}{
 		{sourceFile: "../tests/sftp_test/sftp_test.txt", targetFile: testDir + "/sftp_test.txt"},
 	}
@@ -123,8 +123,21 @@ func TestExecFileUpload(t *testing.T) {
 
 	for _, test := range tests {
 		targetFile := newDockerFile(test.targetFile, false, containerID)
-		sourceFile, _ := os.Open(test.sourceFile)
-		error := targetFile.execFileUpload(sourceFile)
+
+		if _, err := os.Stat(test.sourceFile + ".tar"); os.IsNotExist(err) {
+			os.Remove(test.sourceFile + ".tar")
+		}
+
+		error := archiver.Archive([]string{test.sourceFile}, test.sourceFile+".tar")
+
+		if error != nil {
+			t.Errorf("Unable to tar file %s ", test.sourceFile)
+		}
+		tarFile, error := os.Open(test.sourceFile + ".tar")
+		if error != nil {
+			t.Errorf("Unable to tar file %s ", test.sourceFile)
+		}
+		error = targetFile.execFileUpload(tarFile)
 		if error != nil {
 			t.Errorf("Unable to upload file %s to %s failed", test.sourceFile, test.targetFile)
 		}
@@ -152,12 +165,12 @@ func TestExecFileDownload(t *testing.T) {
 	for _, test := range tests {
 		targetFile := newDockerFile(test.dockerFile, false, containerID)
 
-		error := targetFile.execFileDownload(test.localFile)
-		if error != nil {
+		error := targetFile.execFileDownload()
+		if targetFile.content == nil {
 			t.Errorf("Unable to download file %s to %s failed", test.dockerFile, test.localFile)
 		}
-		if _, err := os.Stat(test.localFile); os.IsNotExist(err) {
-			t.Errorf("Download file %s to %s failed. File does not exists", test.dockerFile, test.localFile)
+		if error != nil {
+			t.Errorf("Unable to download file %s to %s failed", test.dockerFile, test.localFile)
 		}
 	}
 }
@@ -169,7 +182,6 @@ func TestExecRename(t *testing.T) {
 	tests := []struct {
 		sourceFile string
 		targetFile string
-
 	}{
 		{sourceFile: testDir + "/test1.txt", targetFile: testDir + "/test1_rename.txt"},
 	}
@@ -179,7 +191,7 @@ func TestExecRename(t *testing.T) {
 
 	for _, test := range tests {
 		file, fetErr := root.fetch(test.sourceFile)
-		if (fetErr != nil) {
+		if fetErr != nil {
 			t.Errorf("Fetch file: %s failed.", test.sourceFile)
 		}
 		error := file.execFileRename(test.targetFile)
@@ -191,4 +203,3 @@ func TestExecRename(t *testing.T) {
 		}
 	}
 }
-

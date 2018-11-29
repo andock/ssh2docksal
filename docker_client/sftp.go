@@ -1,12 +1,10 @@
 package docker_client
 
-// This serves as an example of how to implement the request server handler as
-// well as a dummy backend for testing. It implements an in-memory backend that
-// works as a very simple filesystem with simple flat key-value lookup system.
+// sftp request server connects to docker container.
 
 import (
 	"bytes"
-	"github.com/google/uuid"
+	"github.com/mholt/archiver"
 	"github.com/pkg/sftp"
 	"io"
 	"io/ioutil"
@@ -17,7 +15,6 @@ import (
 	"sync"
 	"time"
 )
-
 
 func getRoot(containerID string) *root {
 	root := &root{
@@ -37,17 +34,16 @@ func DockerCliSftpHandler(containerID string) sftp.Handlers {
 func (fs *root) Fileread(r *sftp.Request) (io.ReaderAt, error) {
 	fs.filesLock.Lock()
 	defer fs.filesLock.Unlock()
+
 	file, err := fs.fetch(r.Filepath)
-	uuid, err := uuid.NewRandom()
-	tmpFileFile := os.TempDir() + "/" + uuid.String()
-	file.execFileDownload(tmpFileFile)
-	bytes, err := ioutil.ReadFile(tmpFileFile)
 	if err != nil {
 		return nil, err
 	}
-	file.content = bytes
-	os.Remove(tmpFileFile)
+	err = file.execFileDownload()
 
+	if err != nil {
+		return nil, err
+	}
 	return file.ReaderAt()
 }
 
@@ -55,6 +51,7 @@ func (fs *root) Filewrite(r *sftp.Request) (io.WriterAt, error) {
 	fs.filesLock.Lock()
 	defer fs.filesLock.Unlock()
 	file, err := fs.fetch(r.Filepath)
+
 	if err == os.ErrNotExist {
 		dir, err := fs.fetch(filepath.Dir(r.Filepath))
 		if err != nil {
@@ -66,18 +63,9 @@ func (fs *root) Filewrite(r *sftp.Request) (io.WriterAt, error) {
 		file = newDockerFile(r.Filepath, false, fs.containerID)
 		fs.files[r.Filepath] = file
 	} else {
-		file.cleanTmpFile()
 		file.content = nil
 	}
-
-	uuid, err := uuid.NewRandom()
-	tmpFilePath := os.TempDir() + "/" + uuid.String()
-	tmpFile, err := os.Create(tmpFilePath) //os.Create(tmpFilePath)
-	if err != nil {
-		return nil, err
-	}
-	file.tempFile = tmpFile
-	return file.WriterAt()
+	return file, nil
 }
 func oct(i int, prefix bool) string {
 	i64 := int64(i)
@@ -89,6 +77,8 @@ func oct(i int, prefix bool) string {
 	}
 }
 func (fs *root) Filecmd(r *sftp.Request) error {
+	fs.filesLock.Lock()
+	defer fs.filesLock.Unlock()
 	switch r.Method {
 	case "Setstat":
 		// CHMOD
@@ -103,9 +93,9 @@ func (fs *root) Filecmd(r *sftp.Request) error {
 			permissions := oct(int(fileMode), false)
 			return file.execFileChmod(string(permissions))
 		}
-		if (attrFlags.Size) {
+		if attrFlags.Size {
 			file, err := fs.fetch(r.Filepath)
-			if (err != nil) {
+			if err != nil {
 				return err
 			}
 			fileStat := r.Attributes()
@@ -115,7 +105,7 @@ func (fs *root) Filecmd(r *sftp.Request) error {
 		return nil
 	case "Rename":
 		file, err := fs.fetch(r.Filepath)
-		if (err != nil) {
+		if err != nil {
 			return err
 		}
 		err = file.execFileRename(r.Target)
@@ -127,7 +117,7 @@ func (fs *root) Filecmd(r *sftp.Request) error {
 		if err != nil {
 			return err
 		}
-		err = file.remove()
+		err = file.execRemove()
 		if err != nil {
 			return err
 		}
@@ -150,7 +140,7 @@ func (fs *root) Filecmd(r *sftp.Request) error {
 
 type listerat []os.FileInfo
 
-// Modeled after strings.Reader's ReadAt() implementation
+// ListAt modeled after strings.Reader's ReadAt() implementation
 func (f listerat) ListAt(ls []os.FileInfo, offset int64) (int, error) {
 	var n int
 	if offset >= int64(len(f)) {
@@ -172,8 +162,8 @@ func (fs *root) Filelist(r *sftp.Request) (sftp.ListerAt, error) {
 
 	switch r.Method {
 	case "List":
-		parent, err:= fs.fetch(path)
-		if (err != nil) {
+		parent, err := fs.fetch(path)
+		if err != nil {
 			return nil, err
 		}
 		list, err := parent.execFileList()
@@ -204,11 +194,9 @@ func (fs *root) Filelist(r *sftp.Request) (sftp.ListerAt, error) {
 type root struct {
 	*dockerFile
 	files       map[string]*dockerFile
-	filesLock   sync.Mutex
 	containerID string
+	filesLock sync.Mutex
 }
-
-
 
 func (fs *root) fetch(path string) (*dockerFile, error) {
 	if path == "/" {
@@ -232,19 +220,18 @@ type dockerFile struct {
 	name        string
 	modtime     time.Time
 	symlink     string
-	size	    string
+	size        string
 	isdir       bool
 	content     []byte
 	contentLock sync.RWMutex
 	containerID string
-	tempFile    *os.File
 }
 
 func createNewDockerFile(lsString string, containerID string) (*dockerFile, error) {
 	//lsString = strings.Replace(lsString, "  ", " ", -1)
 	parts := strings.Fields(lsString)
 	isDirString := parts[0][0:1]
-	isDir:=false
+	isDir := false
 	nameIdentifier := 8
 	if isDirString == "d" {
 		isDir = true
@@ -259,6 +246,7 @@ func createNewDockerFile(lsString string, containerID string) (*dockerFile, erro
 	file.size = size
 	return file, nil
 }
+
 // factory to make sure modtime is set
 func newDockerFile(name string, isdir bool, containerID string) *dockerFile {
 	return &dockerFile{
@@ -267,15 +255,6 @@ func newDockerFile(name string, isdir bool, containerID string) *dockerFile {
 		isdir:       isdir,
 		containerID: containerID,
 	}
-}
-
-func (f *dockerFile) cleanTmpFile() error {
-	if f.tempFile != nil {
-		err := os.Remove(f.tempFile.Name())
-
-		return err
-	}
-	return nil
 }
 
 // Have dockerFile fulfill os.FileInfo interface
@@ -306,21 +285,85 @@ func (f *dockerFile) ReaderAt() (io.ReaderAt, error) {
 	return bytes.NewReader(f.content), nil
 }
 
-func (f *dockerFile) WriterAt() (io.WriterAt, error) {
-	if f.isdir {
-		return nil, os.ErrInvalid
-	}
-	return f, nil
-}
 func (f *dockerFile) WriteAt(p []byte, off int64) (int, error) {
-	n, err := f.tempFile.WriteAt(p, off)
-	if err != nil {
-		return 0, err
+
+	f.contentLock.Lock()
+	defer f.contentLock.Unlock()
+
+	plen := len(p) + int(off)
+	if plen >= len(f.content) {
+		nc := make([]byte, plen)
+		copy(nc, f.content)
+		f.content = nc
 	}
+	copy(f.content[off:], p)
+
+	// Check if bytes where transfered.
+	// Otherwise a simple touch is more performant.
 	if len(p) != 0 {
-		err = f.execFileUpload(f.tempFile)
+		// Here starts the tricky part.
+		// The docker api only supports tar upload.
+		// Right now there seems no other way as uploading the complete file each time.
+		// First create tmp folder.
+		tmpDirPath, err := ioutil.TempDir("", "ssh2docksal")
+		tmpFilePath := tmpDirPath + "/" + f.Name()
+		tmpTarPath := tmpFilePath + ".tar"
+		// Create tmp file with the correct file name.
+		tmpFile, err := os.Create(tmpFilePath)
+		_, err = tmpFile.Write(f.content)
+		if err != nil {
+			return 0, err
+		}
+		// than create archive file
+		err = archiver.Archive([]string{tmpFilePath}, tmpTarPath)
+		if err != nil {
+			return 0, err
+		}
+		// Last .. upload the file.
+		tarFile, err := os.Open(tmpTarPath)
+		if err != nil {
+			return 0, err
+		}
+		err = f.execFileUpload(tarFile)
+		// Cleanup the tmp folder.
+		os.Remove(tmpDirPath)
 	} else {
-		err = f.execFileCreate()
+		err := f.execFileCreate()
+		if err != nil {
+			return 0, err
+		}
 	}
-	return n, err
+	return len(p), nil
+/*
+	n := 0
+	if len(p) != 0 {
+		f.tmpFile.WriteAt(p, off)
+		tmpDirPath, err := ioutil.TempDir("", "ssh2docksal")
+		tmpFilePath := tmpDirPath + "/" + f.Name()
+		tmpTarPath := tmpFilePath + ".tar"
+		tmpFile, err := os.Create(tmpFilePath)
+		bytes,err := ioutil.ReadAll(f.tmpFile)
+		n, err = tmpFile.Write(bytes)
+
+		if err != nil {
+			return 0, err
+		}
+		err = archiver.Archive([]string{tmpFilePath}, tmpTarPath)
+		if err != nil {
+			return 0, err
+		}
+		tarFile, err := os.Open(tmpTarPath)
+		if err != nil {
+			return 0, err
+		}
+		err = f.execFileUpload(tarFile)
+		os.Remove(tmpDirPath)
+		return n, err
+
+	} else {
+		f.content.Write(p)
+		err := f.execFileCreate()
+		return n, err
+	}
+*/
 }

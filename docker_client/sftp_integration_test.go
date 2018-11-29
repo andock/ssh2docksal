@@ -35,13 +35,11 @@ const (
 	READONLY                = true
 	READWRITE               = false
 	NO_DELAY  time.Duration = 0
-
 )
 
 var testIntegration = flag.Bool("integration", false, "perform integration tests against sftp server process")
 var testSftp = flag.String("sftp", "", "location of the sftp server binary")
 var testDir = "/tmp/sftp_test"
-
 
 func getTestContainerId() string {
 	handler := CliDockerHandler{}
@@ -58,7 +56,7 @@ func initSftpTest() {
 	}
 	os.Mkdir(testDir, os.ModePerm)
 	err := ioutil.WriteFile(testDir+"/test1.txt", []byte("Test1"), 0644)
-	if (err != nil) {
+	if err != nil {
 		log.Fatal(err)
 	}
 	os.Mkdir(testDir+"/dummy", os.ModePerm)
@@ -767,7 +765,6 @@ func TestClientChmodReadonly(t *testing.T) {
 	}
 }
 
-
 func TestClientTruncate(t *testing.T) {
 	sftp, cmd := testClient(t, READWRITE, NO_DELAY)
 	defer cmd.Wait()
@@ -823,7 +820,7 @@ func TestClientTruncateReadonly(t *testing.T) {
 
 func sameFile(want, got os.FileInfo) bool {
 	return want.Name() == got.Name()
-		//want.Size() == got.Size()
+	//want.Size() == got.Size()
 }
 
 func TestClientReadSimple(t *testing.T) {
@@ -862,7 +859,6 @@ func TestClientReadSimple(t *testing.T) {
 		t.Fatalf("invalid contents")
 	}
 }
-
 
 var clientReadTests = []struct {
 	n int64
@@ -1052,7 +1048,6 @@ func TestClientReadFrom(t *testing.T) {
 // occured in a row. The channel to report the errors only had a buffer
 // of 1 and 2 would be sent.
 var fakeNetErr = errors.New("Fake network issue")
-
 
 // taken from github.com/kr/fs/walk_test.go
 
@@ -1306,8 +1301,6 @@ func contains(vector []string, s string) bool {
 	return false
 }
 
-
-
 func TestMatch(t *testing.T) {
 	for _, tt := range matchTests {
 		pattern := tt.pattern
@@ -1318,7 +1311,6 @@ func TestMatch(t *testing.T) {
 		}
 	}
 }
-
 
 func TestGlobError(t *testing.T) {
 	sftp, cmd := testClient(t, READONLY, NO_DELAY)
@@ -1339,8 +1331,6 @@ func TestGlobUNC(t *testing.T) {
 	// See issue 15879.
 	sftp.Glob(`\\?\C:\*`)
 }
-
-
 
 func benchmarkRead(b *testing.B, bufsize int, delay time.Duration) {
 	size := 10*1024*1024 + 123 // ~10MiB
