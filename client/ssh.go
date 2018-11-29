@@ -32,7 +32,7 @@ func (a *CliDockerHandler) Find(containerName string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	args, err := filters.ParseFlag("name="+containerName, filters.NewArgs())
+	args, err := filters.ParseFlag("name=" + containerName, filters.NewArgs())
 	if err != nil {
 		return "", err
 	}
@@ -44,11 +44,12 @@ func (a *CliDockerHandler) Find(containerName string) (string, error) {
 	if len(containers) == 1 {
 		container := containers[0]
 		if container.State != "running" {
+			log.Errorf("container %s is not running. Run fin up.", containerName)
 			return "", fmt.Errorf("container %s is not running. Run fin up.", containerName)
 		}
 		return container.ID, nil
 	}
-
+	log.Errorf("Unable to open container %s. Propably the container is not up. Run fin up.", containerName)
 	return "", fmt.Errorf("Unable to open container %s. Propably the container is not up. Run fin up.", containerName)
 }
 

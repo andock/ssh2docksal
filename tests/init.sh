@@ -44,3 +44,4 @@ cp ssh2docksal.aliases.drushrc.php ssh2docksal_source/drush/
 ./startup.sh
 
 docker ps
+fin version
