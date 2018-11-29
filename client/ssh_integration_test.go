@@ -9,7 +9,7 @@ func TestCliDockerHandler_Find(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	handler := CliDockerHandler{}
-	containerID, err := handler.Find("ssh2docksal_source_cli_1$")
+	containerID, err := handler.Find("ssh2docksal_source_cli_1")
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
 	}
