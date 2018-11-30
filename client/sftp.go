@@ -47,7 +47,10 @@ func (fs *root) Fileread(r *sftp.Request) (io.ReaderAt, error) {
 	}
 	return file.ReaderAt()
 }
-
+func (fs *root) createDockerFile(path string, isdir bool, containerID string) *dockerFile {
+	fs.files[path] = newDockerFile(path, isdir, fs.containerID)
+	return fs.files[path]
+}
 func (fs *root) Filewrite(r *sftp.Request) (io.WriterAt, error) {
 	fs.filesLock.Lock()
 	defer fs.filesLock.Unlock()
@@ -58,21 +61,17 @@ func (fs *root) Filewrite(r *sftp.Request) (io.WriterAt, error) {
 		if err != nil {
 			parentFolderName := filepath.Base(filepath.Dir(r.Filepath))
 			parentFolderPath := filepath.Dir(filepath.Dir(r.Filepath))
-			parrentDir := newDockerFile(parentFolderPath, true, fs.containerID)
-			fs.files[parrentDir.name] = parrentDir
-			err := parrentDir.execMkDir(parentFolderName)
+			parentDir := fs.createDockerFile(parentFolderPath, true, fs.containerID)
+			err := parentDir.execMkDir(parentFolderName)
 			if err != nil {
 				return nil, os.ErrInvalid
 			}
-			dir = newDockerFile(filepath.Dir(r.Filepath), true, fs.containerID)
-			fs.files[dir.name] = dir
+			dir = fs.createDockerFile(filepath.Dir(r.Filepath), true, fs.containerID)
 		}
 		if !dir.isdir {
 			return nil, os.ErrInvalid
 		}
-
-		file = newDockerFile(r.Filepath, false, fs.containerID)
-		fs.files[r.Filepath] = file
+		file = fs.createDockerFile(r.Filepath, false, fs.containerID)
 	} else {
 		file.content = nil
 	}
@@ -141,22 +140,18 @@ func (fs *root) Filecmd(r *sftp.Request) error {
 		// If it is a directory we need to clean up all subfiles/folders.
 		if file.IsDir() {
 			for path, descendantFile := range fs.files {
-				if strings.Contains(path + "/", file.name) {
+				if strings.Contains(path+"/", file.name) {
 					descendantFile.deleted = true
 				}
 			}
 		}
 	case "Mkdir":
-		folder, err := fs.fetch(filepath.Dir(r.Filepath))
-		if err != nil {
-			folder = newDockerFile(filepath.Dir(r.Filepath), true, fs.containerID)
-			//return err
-		}
-		err = folder.execMkDir(filepath.Base(r.Filepath))
+		folder := fs.createDockerFile(filepath.Dir(r.Filepath), true, fs.containerID)
+		err := folder.execMkDir(filepath.Base(r.Filepath))
 		if err != nil {
 			return err
 		}
-		fs.files[r.Filepath] = newDockerFile(r.Filepath, true, folder.containerID)
+		fs.createDockerFile(r.Filepath, true, folder.containerID)
 	case "Symlink":
 		// Not implemented
 	}
@@ -193,7 +188,6 @@ func (fs *root) Filelist(r *sftp.Request) (sftp.ListerAt, error) {
 		}
 		list, err := parent.execFileList(fs)
 
-
 		return listerat(list), err
 	case "Stat":
 		file, err := fs.fetch(path)
@@ -222,7 +216,7 @@ type root struct {
 	*dockerFile
 	files       map[string]*dockerFile
 	containerID string
-	filesLock sync.Mutex
+	filesLock   sync.Mutex
 }
 
 func (fs *root) fetch(path string) (*dockerFile, error) {
@@ -255,7 +249,7 @@ type dockerFile struct {
 	content     []byte
 	contentLock sync.RWMutex
 	containerID string
-	deleted 	bool
+	deleted     bool
 }
 
 func createNewDockerFile(lsString string, containerID string) (*dockerFile, error) {
@@ -360,13 +354,11 @@ func (f *dockerFile) WriteAt(p []byte, off int64) (int, error) {
 		// Cleanup the tmp folder.
 		os.Remove(tmpDirPath)
 
-	}
-	/*else {
+	} else {
 		err := f.execFileCreate()
 		if err != nil {
 			return 0, err
 		}
-	}*/
-	log.Debugf("Upload done: %s", f.name)
+	}
 	return len(p), nil
 }

@@ -126,7 +126,7 @@ func TestExecFileUpload(t *testing.T) {
 
 		os.Remove(test.sourceFile + ".tar")
 
-		error := archiver.Archive([]string{test.sourceFile}, test.sourceFile + ".tar")
+		error := archiver.Archive([]string{test.sourceFile}, test.sourceFile+".tar")
 
 		if error != nil {
 			t.Errorf("Unable to tar file %s ", test.sourceFile)

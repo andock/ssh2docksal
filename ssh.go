@@ -19,8 +19,9 @@ type dockerClientInterface interface {
 // Config for ssh options
 type Config struct {
 	WelcomeMessage string
-	Cache *cache.Cache
+	Cache          *cache.Cache
 }
+
 func (config *Config) getCache() *cache.Cache {
 	if config.Cache != nil {
 		return config.Cache

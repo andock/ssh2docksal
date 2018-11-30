@@ -17,7 +17,7 @@ func simpleExec(containerID string, command string) error {
 }
 
 func outpuExec(containerID string, command string) (string, error) {
-	log.Debugf("Execute command: %s", command)
+	log.Debugf("SFTP: Execute command: %s", command)
 	cli, err := client.NewEnvClient()
 	args := []string{"bash", "-c", command}
 	if err != nil {
@@ -36,7 +36,7 @@ func outpuExec(containerID string, command string) (string, error) {
 	}
 	connection.CloseWrite()
 	stdoutput := new(bytes.Buffer)
-	stderror := new(bytes                    .Buffer)
+	stderror := new(bytes.Buffer)
 	stdcopy.StdCopy(stdoutput, stderror, connection.Reader)
 	output := strings.TrimSpace(stdoutput.String())
 	errorString := stderror.String()

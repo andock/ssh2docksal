@@ -36,8 +36,7 @@ func StartServer(c *cli.Context) {
 
 	sshHandler := &client.CliDockerHandler{}
 
-
-	ssh2docksal.SSHHandler(sshHandler, ssh2docksal.Config {
+	ssh2docksal.SSHHandler(sshHandler, ssh2docksal.Config{
 		WelcomeMessage: c.String("welcome-message"),
 	})
 

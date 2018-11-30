@@ -27,12 +27,12 @@ func (a *CliDockerHandler) SftpHandler(containerID string) sftp.Handlers {
 
 // Find lookups for container id  by given container name
 func (a *CliDockerHandler) Find(containerName string) (string, error) {
-	
+
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		return "", err
 	}
-	args, err := filters.ParseFlag("name=" + containerName, filters.NewArgs())
+	args, err := filters.ParseFlag("name="+containerName, filters.NewArgs())
 	if err != nil {
 		return "", err
 	}
@@ -44,21 +44,25 @@ func (a *CliDockerHandler) Find(containerName string) (string, error) {
 	if len(containers) == 1 {
 		container := containers[0]
 		if container.State != "running" {
-			log.Errorf("container %s is not running. Run fin up.", containerName)
-			return "", fmt.Errorf("container %s is not running. Run fin up.", containerName)
+			err = fmt.Errorf("container %s is not running. Run fin up.", containerName)
+			log.WithError(err)
+			return "", err
 		}
 		return container.ID, nil
 	} else if len(containers) > 1 {
-		log.Errorf("Found more than one container. Name: %s", containerName)
-	} else if len(containers) == 0 {
-		log.Errorf("Unable to find container for name %s. Propably the container is not up. Run fin up.", containerName)
+		err = fmt.Errorf("Found more than one container. Name: %s.", containerName)
+		log.WithError(err)
+		return "", err
+	} else {
+		err = fmt.Errorf("Unable to access container %s. Propably the container is not up. Run fin up.", containerName)
+		log.WithError(err)
+		return "", err
 	}
 
-	return "", fmt.Errorf("Unable to access container %s. Propably the container is not up. Run fin up.", containerName)
 }
 
 func dockerExec(containerID string, command string, cfg container.Config, sess ssh.Session) (status int, err error) {
-	log.Debugf("Execute ssh command: %s", command)
+	log.Debugf("SSH: Execute command: %s", command)
 	status = 255
 	ctx := context.Background()
 	docker, err := client.NewEnvClient()
@@ -145,7 +149,7 @@ func dockerExec(containerID string, command string, cfg container.Config, sess s
 	return
 }
 
-// Execute executes command inside docker
+// Execute executes commands
 func (a *CliDockerHandler) Execute(containerID string, s ssh.Session, c ssh2docksal.Config) {
 	_, _, isPty := s.Pty()
 	cfg := container.Config{AttachStdin: true, AttachStderr: true, AttachStdout: true, Tty: isPty}
