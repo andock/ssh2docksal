@@ -149,16 +149,17 @@ func TestExecFileDownload(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
+	initSftpTest()
 	tests := []struct {
 		localFile  string
 		dockerFile string
 		checkFile  string
 	}{
-		{localFile: testDir + "/download.php", dockerFile: "/var/www/docroot/index.php"},
+		{localFile: testDir + "/test1_downloaded.txt", dockerFile: testDir + "/test1.txt"},
 	}
 	containerID := getTestContainerId()
 
-	initSftpTest()
+
 
 	for _, test := range tests {
 		targetFile := newDockerFile(test.dockerFile, false, containerID)

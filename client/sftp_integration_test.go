@@ -827,7 +827,7 @@ func sameFile(want, got os.FileInfo) bool {
 }
 
 func TestClientReadSimple(t *testing.T) {
-	sftp, cmd := testClient(t, READONLY, NO_DELAY)
+	sftp, cmd := testClient(t, READWRITE, NO_DELAY)
 	defer cmd.Wait()
 	defer sftp.Close()
 
