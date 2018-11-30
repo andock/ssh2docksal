@@ -15,6 +15,7 @@ chmod 400 ~/.ssh/id_rsa
 chmod 600 ~/.ssh/authorized_keys
 eval `ssh-agent -s`
 ssh-add ~/.ssh/id_rsa
+ls -al ~/.ssh
 
 
 # ================== Install docksal ==============================
@@ -42,6 +43,8 @@ cp ssh2docksal.aliases.drushrc.php ssh2docksal_source/drush/
 
 #  ==================  Start ssh2docksal docker image ==============================
 ./startup.sh
-
+id -u travis
 docker ps
+docker exec ssh2docksal ls -al /home/docker/.ssh
+docker exec ssh2docksal id -u docker
 fin version

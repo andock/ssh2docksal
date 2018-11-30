@@ -14,6 +14,7 @@ func NoAuth() ssh.Option {
 }
 
 func validatePublicKeyAuth(authorizedKeysFile string, key ssh.PublicKey) bool {
+
 	authorizedKeysBytes, err := ioutil.ReadFile(authorizedKeysFile)
 	if err != nil {
 		log.Fatalf("Failed to load authorized_keys, err: %v", err)

@@ -40,10 +40,7 @@ RUN set -xe; \
 
 
 ENV \
-    # ssh-agent proxy socket (requires docksal/ssh-agent)
-    SSH_AUTH_SOCK=/.ssh-agent/proxy-socket \
 	TERM=xterm \
-	PROJECT_ROOT=/var/www \
 	# Default values for HOST_UID and HOST_GUI to match the default Ubuntu user. These are used in startup.sh
 	HOST_UID=1000 \
 	HOST_GID=1000
