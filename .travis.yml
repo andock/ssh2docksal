@@ -18,7 +18,6 @@ before_install:
 - which expect
 -
 script:
-- set -e
 - make build
 - make docker
 - cd tests
@@ -29,8 +28,9 @@ script:
 - cd tests
 - docker logs ssh2docksal
 - bats simple.bats
+- docker logs ssh2docksal
 - bats drush.bats
-
+- docker logs ssh2docksal
 #- go run ./cmd/gotty-client/main.go --help || true
 #- make cover
 #- goveralls -service=travis-ci -v -covermode=count -coverprofile=profile.out
