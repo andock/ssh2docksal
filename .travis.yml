@@ -26,11 +26,11 @@ script:
 - make test
 
 - cd tests
-- docker logs ssh2docksal
+- docker logs andock-ssh2docksal
 - bats simple.bats
-- docker logs ssh2docksal
+- docker logs andock-ssh2docksal
 - bats drush.bats
-- docker logs ssh2docksal
+- docker logs andock-ssh2docksal
 #- go run ./cmd/gotty-client/main.go --help || true
 #- make cover
 #- goveralls -service=travis-ci -v -covermode=count -coverprofile=profile.out

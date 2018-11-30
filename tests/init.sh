@@ -45,6 +45,6 @@ cp ssh2docksal.aliases.drushrc.php ssh2docksal_source/drush/
 ./startup.sh
 id -u travis
 docker ps
-docker exec ssh2docksal ls -al /home/docker/.ssh
-docker exec ssh2docksal id -u docker
+docker exec andock-ssh2docksal ls -al /home/docker/.ssh
+docker exec andock-ssh2docksal id -u docker
 fin version
