@@ -352,7 +352,10 @@ func (f *dockerFile) WriteAt(p []byte, off int64) (int, error) {
 		err = f.execFileUpload(tarFile)
 
 		// Cleanup the tmp folder.
-		os.Remove(tmpDirPath)
+		go func() {
+			os.Remove(tmpDirPath)
+		}()
+
 
 	} else {
 		err := f.execFileCreate()

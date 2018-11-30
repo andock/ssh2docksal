@@ -79,7 +79,7 @@ func (file *dockerFile) execFileDownload() error {
 }
 
 func (file *dockerFile) execFileCreate() error {
-	return simpleExec(file.containerID, "cd "+filepath.Dir(file.name)+"; touch "+file.Name())
+	return simpleExec(file.containerID, "mkdir -p '" + filepath.Dir(file.name) + "'; cd '" + filepath.Dir(file.name) + "'; touch '"+file.Name() + "'" )
 }
 
 func (fs *root) execFileInfo(fileName string) (*dockerFile, error) {
@@ -106,7 +106,7 @@ func (file *dockerFile) execRemove() error {
 	if file.IsDir() {
 		flag = " -r "
 	}
-	return simpleExec(file.containerID, "rm"+flag+file.name)
+	return simpleExec(file.containerID, "rm" + flag + file.name)
 }
 
 func (file *dockerFile) execFileRename(targetName string) error {
@@ -114,9 +114,9 @@ func (file *dockerFile) execFileRename(targetName string) error {
 }
 
 func (file *dockerFile) execTruncate(size uint64) error {
-	return simpleExec(file.containerID, "truncate -s "+strconv.FormatUint(size, 10)+" "+file.name)
+	return simpleExec(file.containerID, "truncate -s " + strconv.FormatUint(size, 10) + " " + file.name)
 }
 
 func (folder *dockerFile) execMkDir(folderName string) error {
-	return simpleExec(folder.containerID, "mkdir -p "+folder.name+"/"+folderName)
+	return simpleExec(folder.containerID, "mkdir -p "+ folder.name+"/"+folderName)
 }
