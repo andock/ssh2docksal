@@ -27,6 +27,7 @@ script:
 - make test
 
 - cd tests
+- docker logs ssh2docksal
 - bats simple.bats
 - bats drush.bats
 
