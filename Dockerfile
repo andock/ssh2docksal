@@ -19,9 +19,9 @@ RUN set -xe; \
     apt-get clean;
 
 RUN set -xe; \
-	# Create a regular user/group "docker" (uid = 1000, gid = 999 ) with access to sudo
-	groupadd docker -g 999; \
-	useradd -m -s /bin/bash -u 1000 -g 999 -G sudo -p docker docker; \
+	# Create a regular user/group "docker" (uid = 1000, gid = 1000 ) with access to sudo
+	groupadd docker -g 1000; \
+	useradd -m -s /bin/bash -u 1000 -g 1000 -G sudo -p docker docker; \
 echo 'docker ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
 
