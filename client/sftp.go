@@ -4,6 +4,7 @@ package client
 
 import (
 	"bytes"
+	"github.com/apex/log"
 	"github.com/mholt/archiver"
 	"github.com/pkg/sftp"
 	"io"
@@ -55,11 +56,21 @@ func (fs *root) Filewrite(r *sftp.Request) (io.WriterAt, error) {
 	if err == os.ErrNotExist {
 		dir, err := fs.fetch(filepath.Dir(r.Filepath))
 		if err != nil {
-			return nil, err
+			parentFolderName := filepath.Base(filepath.Dir(r.Filepath))
+			parentFolderPath := filepath.Dir(filepath.Dir(r.Filepath))
+			parrentDir := newDockerFile(parentFolderPath, true, fs.containerID)
+			fs.files[parrentDir.name] = parrentDir
+			err := parrentDir.execMkDir(parentFolderName)
+			if err != nil {
+				return nil, os.ErrInvalid
+			}
+			dir = newDockerFile(filepath.Dir(r.Filepath), true, fs.containerID)
+			fs.files[dir.name] = dir
 		}
 		if !dir.isdir {
 			return nil, os.ErrInvalid
 		}
+
 		file = newDockerFile(r.Filepath, false, fs.containerID)
 		fs.files[r.Filepath] = file
 	} else {
@@ -126,11 +137,20 @@ func (fs *root) Filecmd(r *sftp.Request) error {
 		}()
 
 		file.deleted = true
-		//delete(fs.files, r.Filepath)
+
+		// If it is a directory we need to clean up all subfiles/folders.
+		if file.IsDir() {
+			for path, descendantFile := range fs.files {
+				if strings.Contains(path + "/", file.name) {
+					descendantFile.deleted = true
+				}
+			}
+		}
 	case "Mkdir":
 		folder, err := fs.fetch(filepath.Dir(r.Filepath))
 		if err != nil {
-			return err
+			folder = newDockerFile(filepath.Dir(r.Filepath), true, fs.containerID)
+			//return err
 		}
 		err = folder.execMkDir(filepath.Base(r.Filepath))
 		if err != nil {
@@ -297,7 +317,7 @@ func (f *dockerFile) ReaderAt() (io.ReaderAt, error) {
 }
 
 func (f *dockerFile) WriteAt(p []byte, off int64) (int, error) {
-
+	log.Debugf("Upload file: %s", f.name)
 	f.contentLock.Lock()
 	defer f.contentLock.Unlock()
 
@@ -336,13 +356,17 @@ func (f *dockerFile) WriteAt(p []byte, off int64) (int, error) {
 			return 0, err
 		}
 		err = f.execFileUpload(tarFile)
+
 		// Cleanup the tmp folder.
 		os.Remove(tmpDirPath)
-	} else {
+
+	}
+	/*else {
 		err := f.execFileCreate()
 		if err != nil {
 			return 0, err
 		}
-	}
+	}*/
+	log.Debugf("Upload done: %s", f.name)
 	return len(p), nil
 }

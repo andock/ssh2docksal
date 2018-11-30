@@ -52,6 +52,7 @@ func SSHHandler(sshHandler dockerClientInterface, config Config) {
 		c := config.getCache()
 		var err error
 		var existingContainer string
+
 		cacheValue, found := c.Get(s.User())
 		if !found {
 			existingContainer, err = getContainerID(sshHandler, s.User())

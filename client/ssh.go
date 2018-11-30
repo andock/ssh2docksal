@@ -58,6 +58,7 @@ func (a *CliDockerHandler) Find(containerName string) (string, error) {
 }
 
 func dockerExec(containerID string, command string, cfg container.Config, sess ssh.Session) (status int, err error) {
+	log.Debugf("Execute ssh command: %s", command)
 	status = 255
 	ctx := context.Background()
 	docker, err := client.NewEnvClient()
