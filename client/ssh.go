@@ -32,7 +32,7 @@ func (a *CliDockerHandler) Find(containerName string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	args, err := filters.ParseFlag("name="+containerName, filters.NewArgs())
+	args, err := filters.ParseFlag("name=" +containerName, filters.NewArgs())
 	if err != nil {
 		return "", err
 	}

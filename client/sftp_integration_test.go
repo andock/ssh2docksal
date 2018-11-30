@@ -885,7 +885,7 @@ var clientReadTests = []struct {
 }
 
 func TestClientRead(t *testing.T) {
-	sftp, cmd := testClient(t, READONLY, NO_DELAY)
+	sftp, cmd := testClient(t, READWRITE, NO_DELAY)
 	defer cmd.Wait()
 	defer sftp.Close()
 
