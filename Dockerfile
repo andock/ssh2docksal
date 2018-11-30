@@ -46,4 +46,6 @@ ENV \
 	HOST_GID=1000
 
 RUN make
-ENTRYPOINT ["/go/src/github.com/andock/ssh2docksal/ssh2docksal"]
+COPY startup.sh /opt/startup.sh
+
+ENTRYPOINT ["/opt/startup.sh"]
