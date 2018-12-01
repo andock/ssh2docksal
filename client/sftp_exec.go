@@ -2,6 +2,7 @@ package client
 
 import (
 	"archive/tar"
+	"fmt"
 	"github.com/apex/log"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
@@ -79,11 +80,11 @@ func (file *dockerFile) execFileDownload() error {
 }
 
 func (file *dockerFile) execFileCreate() error {
-	return simpleExec(file.containerID, "mkdir -p '" + filepath.Dir(file.name) + "'; cd '" + filepath.Dir(file.name) + "'; touch '"+file.Name() + "'" )
+	return simpleExec(file.containerID, fmt.Sprintf("mkdir -p '%s'; cd '%s'; touch '%s'", filepath.Dir(file.name), filepath.Dir(file.name), file.Name()) )
 }
 
 func (fs *root) execFileInfo(fileName string) (*dockerFile, error) {
-	output, err := outpuExec(fs.containerID, "if [ -e '"+fileName+"' ]; then ls -ald '"+fileName+"'; fi")
+	output, err := outpuExec(fs.containerID, fmt.Sprintf("if [ -e '%s' ]; then ls -ald '%s'; fi", fileName, fileName))
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +99,7 @@ func (fs *root) execFileInfo(fileName string) (*dockerFile, error) {
 }
 
 func (file *dockerFile) execFileChmod(perm string) error {
-	return simpleExec(file.containerID, "chmod "+string(perm)+" "+file.name)
+	return simpleExec(file.containerID, fmt.Sprintf("chmod %s '%s'",string(perm), file.name))
 }
 
 func (file *dockerFile) execRemove() error {
@@ -106,17 +107,17 @@ func (file *dockerFile) execRemove() error {
 	if file.IsDir() {
 		flag = " -r "
 	}
-	return simpleExec(file.containerID, "rm" + flag + file.name)
+	return simpleExec(file.containerID, fmt.Sprintf("rm -f %s '%s'", flag, file.name))
 }
 
 func (file *dockerFile) execFileRename(targetName string) error {
-	return simpleExec(file.containerID, "mv "+file.name+" "+targetName)
+	return simpleExec(file.containerID, fmt.Sprintf("mv '%s' '%s'",file.name,targetName))
 }
 
 func (file *dockerFile) execTruncate(size uint64) error {
-	return simpleExec(file.containerID, "truncate -s " + strconv.FormatUint(size, 10) + " " + file.name)
+	return simpleExec(file.containerID, fmt.Sprintf("truncate -s %s	'%s'" , strconv.FormatUint(size, 10), file.name))
 }
 
 func (folder *dockerFile) execMkDir(folderName string) error {
-	return simpleExec(folder.containerID, "mkdir -p "+ folder.name+"/"+folderName)
+	return simpleExec(folder.containerID, fmt.Sprintf("mkdir -p '%s/%s'", folder.name, folderName))
 }

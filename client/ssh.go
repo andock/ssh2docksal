@@ -44,18 +44,18 @@ func (a *CliDockerHandler) Find(containerName string) (string, error) {
 	if len(containers) == 1 {
 		container := containers[0]
 		if container.State != "running" {
-			err = fmt.Errorf("container %s is not running. Run fin up.", containerName)
-			log.WithError(err)
+			err = fmt.Errorf("Container %s is not running. Run fin up.", containerName)
+			log.Errorf(err.Error())
 			return "", err
 		}
 		return container.ID, nil
 	} else if len(containers) > 1 {
 		err = fmt.Errorf("Found more than one container. Name: %s.", containerName)
-		log.WithError(err)
+		log.Errorf(err.Error())
 		return "", err
 	} else {
 		err = fmt.Errorf("Unable to access container %s. Propably the container is not up. Run fin up.", containerName)
-		log.WithError(err)
+		log.Errorf(err.Error())
 		return "", err
 	}
 

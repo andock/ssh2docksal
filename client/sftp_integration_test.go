@@ -249,6 +249,7 @@ func TestClientMkdir(t *testing.T) {
 	if err := sftp.Mkdir(sub); err != nil {
 		t.Fatal(err)
 	}
+	time.Sleep(2 * time.Second)
 	if _, err := os.Lstat(sub); err != nil {
 		t.Fatal(err)
 	}
@@ -266,6 +267,7 @@ func TestClientMkdirAll(t *testing.T) {
 	if err := sftp.MkdirAll(sub); err != nil {
 		t.Fatal(err)
 	}
+	time.Sleep(2 * time.Second)
 	info, err := os.Lstat(sub)
 	if err != nil {
 		t.Fatal(err)

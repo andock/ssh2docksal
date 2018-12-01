@@ -58,7 +58,7 @@ func SSHHandler(sshHandler dockerClientInterface, config Config) {
 		if !found {
 			existingContainer, err = getContainerID(sshHandler, s.User())
 			if existingContainer == "" {
-				log.Errorf("container %s lookup failed. Maybe the container is not up. Run fin up", s.User())
+				log.Errorf("Container %s lookup failed. Maybe the container is not up. Run fin up", s.User(), err)
 			} else {
 				c.Set(s.User(), existingContainer, cache.DefaultExpiration)
 			}
@@ -79,6 +79,7 @@ func SSHHandler(sshHandler dockerClientInterface, config Config) {
 		log.Debugf("Found container %s", existingContainer)
 
 		if err != nil {
+			log.Errorf(err.Error())
 			s.Exit(1)
 			return
 		}

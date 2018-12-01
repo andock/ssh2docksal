@@ -1,9 +1,10 @@
 #!/bin/bash
+docker rm andock-ssh2docksal -f
+
 docker run \
 -d \
--u docker \
 -e "HOST_UID=$(id -u)" \
--e "HOST_GID=$(id -g)" \
+-e "HOST_GID=$(cut -d: -f3 < <(getent group docker))" \
 -v /var/run/docker.sock:/var/run/docker.sock \
 -v /usr/bin/docker:/usr/bin/docker \
 --name andock-ssh2docksal \

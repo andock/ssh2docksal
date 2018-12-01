@@ -125,14 +125,13 @@ func (fs *root) Filecmd(r *sftp.Request) error {
 		fs.files[r.Target] = fs.files[r.Filepath]
 		delete(fs.files, r.Filepath)
 	case "Rmdir", "Remove":
+
 		file, err := fs.fetch(r.Filepath)
 		if err != nil {
 			return err
 		}
 		go func() {
-			fs.contentLock.Lock()
 			file.execRemove()
-			defer fs.contentLock.Unlock()
 		}()
 
 		file.deleted = true
@@ -146,11 +145,14 @@ func (fs *root) Filecmd(r *sftp.Request) error {
 			}
 		}
 	case "Mkdir":
+
 		folder := fs.createDockerFile(filepath.Dir(r.Filepath), true, fs.containerID)
-		err := folder.execMkDir(filepath.Base(r.Filepath))
-		if err != nil {
-			return err
-		}
+		go func() {
+			err := folder.execMkDir(filepath.Base(r.Filepath))
+			if err != nil {
+				log.Errorf(err.Error())
+			}
+		}()
 		fs.createDockerFile(r.Filepath, true, folder.containerID)
 	case "Symlink":
 		// Not implemented
@@ -313,8 +315,6 @@ func (f *dockerFile) ReaderAt() (io.ReaderAt, error) {
 func (f *dockerFile) WriteAt(p []byte, off int64) (int, error) {
 	log.Debugf("Upload file: %s", f.name)
 	f.contentLock.Lock()
-	defer f.contentLock.Unlock()
-
 	plen := len(p) + int(off)
 	if plen >= len(f.content) {
 		nc := make([]byte, plen)
@@ -363,5 +363,6 @@ func (f *dockerFile) WriteAt(p []byte, off int64) (int, error) {
 			return 0, err
 		}
 	}
+	defer f.contentLock.Unlock()
 	return len(p), nil
 }

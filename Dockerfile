@@ -48,4 +48,5 @@ ENV \
 RUN make
 COPY startup.sh /opt/startup.sh
 
+USER root
 ENTRYPOINT ["/opt/startup.sh"]
