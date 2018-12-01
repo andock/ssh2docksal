@@ -11,20 +11,22 @@ ssh2docksal is a ssh server which connects you directly to your docksal containe
 ### TODO: 
 * Symlinks
 
-## Samples:
+# Sample:
 
-Connect to the `cli` container of `projectname`
+Connect to the `cli` container of `project`
 ```
-    ssh projectname@192.168.64.100 -p 2222
-```
-
-Connect to the `db` container of `projectname`
-```
-    ssh projectname--db@192.168.64.100 -p 2222
+    ssh project@192.168.64.100 -p 2222
 ```
 
-## Usage without authorization:
+Connect to the `mysql` container of `project`
+```
+    ssh project---mysql@192.168.64.100 -p 2222
+```
+
+# For phpStorm
 E.g. To connect phpStorm via ssh.
+
+Startup:
 ```
 docker run \
 -d \
@@ -37,8 +39,15 @@ docker run \
 -p 192.168.64.100:2222:2222 andockio/ssh2docksal
 ```
 
-## Usage with authorization:
-E.g. for your sandbox server.
+### Add remote debugger
+
+
+### Add phpcs
+
+# For sandbox servers:
+E.g. to run drush sql-sync.
+
+Startup:
 ```
 docker run \
 -d \
@@ -50,3 +59,4 @@ docker run \
 -v ${HOME}/.ssh/authorized_keys:/home/docker/.ssh/authorized_keys \
 -p 0.0.0.0:2222:2222 andockio/ssh2docksal 
 ```
+

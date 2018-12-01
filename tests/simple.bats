@@ -26,7 +26,7 @@
 
 @test "Test scp upload" {
   sleep 20
-  run scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no  -P 2222  tty.txt ssh2docksal_target@192.168.64.100:tty-upload.txt
+  run scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no  -P 2222  tty-upload.txt ssh2docksal_target@192.168.64.100:tty-upload.txt
   [ $status = 0 ]
   run ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ssh2docksal_target@192.168.64.100 -p 2222 ls tty-upload.txt
   [[ "$output" =~ "tty-upload.txt" ]]
