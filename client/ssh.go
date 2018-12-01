@@ -17,16 +17,16 @@ import (
 	"time"
 )
 
-type CliDockerHandler struct {
+type DockerClient struct {
 }
 
 // SftpHandler returns the associated sftp docker handler.
-func (a *CliDockerHandler) SftpHandler(containerID string) sftp.Handlers {
+func (a *DockerClient) SftpHandler(containerID string) sftp.Handlers {
 	return DockerCliSftpHandler(containerID)
 }
 
 // Find lookups for container id  by given container name
-func (a *CliDockerHandler) Find(containerName string) (string, error) {
+func (a *DockerClient) Find(containerName string) (string, error) {
 
 	cli, err := client.NewEnvClient()
 	if err != nil {
@@ -150,7 +150,7 @@ func dockerExec(containerID string, command string, cfg container.Config, sess s
 }
 
 // Execute executes commands
-func (a *CliDockerHandler) Execute(containerID string, s ssh.Session, c ssh2docksal.Config) {
+func (a *DockerClient) Execute(containerID string, s ssh.Session, c ssh2docksal.Config) {
 	_, _, isPty := s.Pty()
 	cfg := container.Config{AttachStdin: true, AttachStderr: true, AttachStdout: true, Tty: isPty}
 	_, err := dockerExec(containerID, strings.Join(s.Command(), " "), cfg, s)
