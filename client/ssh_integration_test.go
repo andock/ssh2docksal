@@ -4,11 +4,11 @@ import (
 	"testing"
 )
 
-func TestCliDockerHandler_Find(t *testing.T) {
+func TestDockerClient_Find(t *testing.T) {
 	if !*testIntegration {
 		t.Skip("skipping integration test")
 	}
-	handler := CliDockerHandler{}
+	handler := DockerClient{}
 	containerID, err := handler.Find("ssh2docksal_source_cli_1")
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)

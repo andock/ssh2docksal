@@ -7,7 +7,7 @@ import (
 )
 
 func getReadOnlyTestContainerId() string {
-	handler := CliDockerHandler{}
+	handler := DockerClient{}
 	containerID, err := handler.Find("ssh2docksal_source_cli_ro_1")
 	if err != nil {
 		panic("Unable to find ssh2docksal_source_cli container. Run in 'tests/ssh2docksal_source' fin up")

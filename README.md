@@ -40,10 +40,10 @@ docker run \
 ```
 
 ### Add remote debugger
-
+![alt text](images/remote-interpreter.png "andock")
 
 ### Add phpcs
-
+![alt text](images/phpcs.png "andock")
 # For sandbox servers:
 E.g. to run drush sql-sync.
 
