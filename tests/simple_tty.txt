@@ -1,1 +1,1 @@
-Simple tty test file.
+simple_tty

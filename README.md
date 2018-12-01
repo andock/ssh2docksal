@@ -2,7 +2,14 @@
 
 ![alt text](images/logo_circle.svg "andock")
 # ssh2docksal
-Andock ssh2docksal is a simple ssh server which connects you directly to your docksal container via ssh.
+ssh2docksal is a ssh server which connects you directly to your docksal container via ssh. 
+
+### Currently implemented: 
+* Supports TTY
+* Supports drush / rsync
+* Supports sftp
+### TODO: 
+* Symlinks
 
 ## Samples:
 
@@ -20,23 +27,26 @@ Connect to the `db` container of `projectname`
 E.g. To connect phpStorm via ssh.
 ```
 docker run \
--u docker \
 -d \
+-e "HOST_UID=$(id -u)" \
+-e "HOST_GID=$(cut -d: -f3 < <(getent group docker))" \
 -v /var/run/docker.sock:/var/run/docker.sock \
 -v /usr/bin/docker:/usr/bin/docker \
---name ssh2docksal \
--p 192.168.64.100:2222:2222 andockio/ssh2docksal --auth-type=noauth
+--name andock-ssh2docksal \
+-v ${HOME}/.ssh/authorized_keys:/home/docker/.ssh/authorized_keys \
+-p 192.168.64.100:2222:2222 andockio/ssh2docksal
 ```
 
 ## Usage with authorization:
 E.g. for your sandbox server.
 ```
 docker run \
--u docker \
 -d \
+-e "HOST_UID=$(id -u)" \
+-e "HOST_GID=$(cut -d: -f3 < <(getent group docker))" \
 -v /var/run/docker.sock:/var/run/docker.sock \
 -v /usr/bin/docker:/usr/bin/docker \
--v ${HOME}/.ssh/authorized_keys:/root/.ssh/authorized_keys \
---name ssh2docksal \
--p 192.168.64.100:2222:2222 andockio/ssh2docksal
+--name andock-ssh2docksal \
+-v ${HOME}/.ssh/authorized_keys:/home/docker/.ssh/authorized_keys \
+-p 0.0.0.0:2222:2222 andockio/ssh2docksal 
 ```
