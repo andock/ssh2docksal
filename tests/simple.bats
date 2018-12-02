@@ -18,10 +18,10 @@
 }
 
 @test "Test scp download" {
-  sleep 10
-  scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no  -P 2222 ssh2docksal_target@192.168.64.100:/var/www/simple_tty.txt .
-  run ls simple_tty.txt
-  [[ "$output" =~ "simple_tty.txt" ]]
+  sleep 2
+  run scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no  -P 2222 ssh2docksal_target@192.168.64.100:/var/www/README.md download_README.md
+  run ls download_README.md
+  [[ "$output" =~ "download_README.md" ]]
 }
 
 @test "Test scp upload" {
