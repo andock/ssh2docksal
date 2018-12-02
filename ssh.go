@@ -1,7 +1,9 @@
 package ssh2docksal
 
 import (
+	"fmt"
 	"github.com/apex/log"
+	"github.com/common-nighthawk/go-figure"
 	"github.com/gliderlabs/ssh"
 	"github.com/patrickmn/go-cache"
 	"github.com/pkg/sftp"
@@ -30,7 +32,7 @@ func (config *Config) getCache() *cache.Cache {
 	config.Cache = cache
 	return config.Cache
 }
-func getContainerID(client dockerClientInterface, username string) (string, error) {
+func getContainerNames(username string) (string, string) {
 
 	var container string
 	s := strings.Split(username, "---")
@@ -41,7 +43,10 @@ func getContainerID(client dockerClientInterface, username string) (string, erro
 	} else if len(s) == 1 {
 		container = "cli"
 	}
-
+	return projectName, container
+}
+func getContainerID(client dockerClientInterface, username string) (string, error) {
+	projectName, container := getContainerNames(username)
 	containerName := projectName + "_" + container + "_1"
 	return client.Find(containerName)
 }
@@ -90,6 +95,15 @@ func SSHHandler(sshHandler dockerClientInterface, config Config) {
 			_ = sftpServer.Serve()
 
 		} else {
+			if config.WelcomeMessage != "" {
+				projectName, container := getContainerNames(s.User())
+				message := figure.NewFigure(config.WelcomeMessage, "", true).String()
+				fmt.Fprintf(s, "\n\n%s\n\n\r", message)
+				fmt.Fprintf(s, " Welcome to %s.\n\n\r", config.WelcomeMessage)
+				fmt.Fprintf(s, " This is the %s service\n\r", container)
+				fmt.Fprintf(s, " of environment %s.\n\n\r", projectName)
+			}
+
 			sshHandler.Execute(existingContainer, s, config)
 		}
 
