@@ -19,7 +19,7 @@
 
 @test "Test scp download" {
   sleep 10
-  scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no  -P 2222 ssh2docksal_target@192.168.64.100:/home/docker/simple_tty.txt .
+  scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no  -P 2222 ssh2docksal_target@192.168.64.100:/var/www/simple_tty.txt .
   run ls simple_tty.txt
   [[ "$output" =~ "simple_tty.txt" ]]
 }

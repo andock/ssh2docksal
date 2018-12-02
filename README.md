@@ -4,12 +4,9 @@
 # ssh2docksal
 ssh2docksal is a ssh server which connects you directly to your docksal container via ssh. 
 
-### Currently implemented: 
 * Supports TTY
-* Supports drush / rsync
-* Supports sftp
-### TODO: 
-* Symlinks
+* Supports drush / rsync / scp
+* Supports sftp (for phpStorm) 
 
 # Sample:
 
@@ -32,12 +29,12 @@ docker run \
 -d \
 -e "HOST_UID=$(id -u)" \
 -e "HOST_GID=$(cut -d: -f3 < <(getent group docker))" \
---restart allways \
+--restart=always \
 -v /var/run/docker.sock:/var/run/docker.sock \
 -v /usr/bin/docker:/usr/bin/docker \
 --name andock-ssh2docksal \
 -v ${HOME}/.ssh/authorized_keys:/home/docker/.ssh/authorized_keys \
--p 192.168.64.100:2222:2222 andockio/ssh2docksal
+-p 192.168.64.100:2222:2222 andockio/ssh2docksal --verbose
 ```
 
 ### Add remote debugger
@@ -67,7 +64,7 @@ docker run \
 -d \
 -e "HOST_UID=$(id -u)" \
 -e "HOST_GID=$(cut -d: -f3 < <(getent group docker))" \
---restart allways \
+--restart=always \
 -v /var/run/docker.sock:/var/run/docker.sock \
 -v /usr/bin/docker:/usr/bin/docker \
 --name andock-ssh2docksal \
