@@ -95,7 +95,8 @@ func SSHHandler(sshHandler dockerClientInterface, config Config) {
 			_ = sftpServer.Serve()
 
 		} else {
-			if config.WelcomeMessage != "" {
+			_, _, isPty := s.Pty()
+			if config.WelcomeMessage != "" && isPty == true {
 				projectName, container := getContainerNames(s.User())
 				message := figure.NewFigure(config.WelcomeMessage, "", true).String()
 				fmt.Fprintf(s, "\n\n%s\n\n\r", message)
