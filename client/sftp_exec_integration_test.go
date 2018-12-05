@@ -1,6 +1,7 @@
 package client
 
 import (
+	"github.com/andock/ssh2docksal"
 	"github.com/mholt/archiver"
 	"os"
 	"testing"
@@ -32,7 +33,8 @@ func TestExecFileInfo(t *testing.T) {
 	}
 
 	containerID := getTestContainerId()
-	root := getRoot(containerID)
+	c := ssh2docksal.Config{DockerUser:"docker"}
+	root := getRoot(containerID, c)
 
 	for _, test := range tests {
 		file, err := root.execFileInfo(test.file)
@@ -63,7 +65,8 @@ func TestFetch(t *testing.T) {
 		{file: "/usr/local/bin/php", isDir: false},
 	}
 	containerID := getTestContainerId()
-	root := getRoot(containerID)
+	c := ssh2docksal.Config{DockerUser:"docker"}
+	root := getRoot(containerID, c)
 	for _, test := range tests {
 		result, _ := root.fetch(test.file)
 		if result == nil {
@@ -90,7 +93,8 @@ func TestExecFileList(t *testing.T) {
 		{file: "/usr/local/bin", result: 26},
 	}
 	containerID := getTestContainerId()
-	root := getRoot(containerID)
+	c := ssh2docksal.Config{DockerUser:"docker"}
+	root := getRoot(containerID, c)
 	for _, test := range tests {
 		folder, err := root.fetch(test.file)
 		if err != nil {
@@ -185,7 +189,9 @@ func TestExecRename(t *testing.T) {
 		{sourceFile: testDir + "/test1.txt", targetFile: testDir + "/test1_rename.txt"},
 	}
 	containerID := getTestContainerId()
-	root := getRoot(containerID)
+	c := ssh2docksal.Config{DockerUser:"docker"}
+
+	root := getRoot(containerID, c)
 	initSftpTest()
 
 	for _, test := range tests {

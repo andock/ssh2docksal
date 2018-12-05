@@ -21,8 +21,8 @@ type DockerClient struct {
 }
 
 // SftpHandler returns the associated sftp docker handler.
-func (a *DockerClient) SftpHandler(containerID string) sftp.Handlers {
-	return DockerCliSftpHandler(containerID)
+func (a *DockerClient) SftpHandler(containerID string, config ssh2docksal.Config) sftp.Handlers {
+	return DockerCliSftpHandler(containerID, config)
 }
 
 // Find lookups for container id  by given container name
@@ -61,7 +61,7 @@ func (a *DockerClient) Find(containerName string) (string, error) {
 
 }
 
-func dockerExec(containerID string, command string, cfg container.Config, sess ssh.Session) (status int, err error) {
+func dockerExec(containerID string, command string, cfg container.Config, sess ssh.Session, config ssh2docksal.Config) (status int, err error) {
 	log.Debugf("SSH: Execute command: %s", command)
 	status = 255
 	ctx := context.Background()
@@ -89,7 +89,7 @@ func dockerExec(containerID string, command string, cfg container.Config, sess s
 		ec.Cmd = append(ec.Cmd, command)
 	}
 
-	ec.User = "docker"
+	ec.User = config.DockerUser
 	eresp, err := docker.ContainerExecCreate(context.Background(), containerID, ec)
 	if err != nil {
 		log.Errorf("docker.ContainerExecCreate: ", err)
@@ -153,7 +153,7 @@ func dockerExec(containerID string, command string, cfg container.Config, sess s
 func (a *DockerClient) Execute(containerID string, s ssh.Session, c ssh2docksal.Config) {
 	_, _, isPty := s.Pty()
 	cfg := container.Config{AttachStdin: true, AttachStderr: true, AttachStdout: true, Tty: isPty}
-	_, err := dockerExec(containerID, strings.Join(s.Command(), " "), cfg, s)
+	_, err := dockerExec(containerID, strings.Join(s.Command(), " "), cfg, s, c)
 	if err != nil {
 		s.Exit(255)
 	}

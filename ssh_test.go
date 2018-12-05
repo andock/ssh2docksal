@@ -22,7 +22,7 @@ func (a *testClient) Execute(containerID string, s ssh.Session, c Config) {
 type testClient struct {
 }
 
-func (a *testClient) SftpHandler(containerID string) sftp.Handlers {
+func (a *testClient) SftpHandler(containerID string, config Config) sftp.Handlers {
 	var handler sftp.Handlers
 	return handler
 }

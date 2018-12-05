@@ -4,6 +4,7 @@ package client
 
 import (
 	"bytes"
+	"github.com/andock/ssh2docksal"
 	"github.com/apex/log"
 	"github.com/mholt/archiver"
 	"github.com/pkg/sftp"
@@ -17,18 +18,19 @@ import (
 	"time"
 )
 
-func getRoot(containerID string) *root {
+func getRoot(containerID string, config ssh2docksal.Config) *root {
 	root := &root{
 		files:       make(map[string]*dockerFile),
 		containerID: containerID,
+		config: config,
 	}
 	root.dockerFile = newDockerFile("/", true, root.containerID)
 	return root
 }
 
 // DocCliHandler returns a Hanlders object for docker cli.
-func DockerCliSftpHandler(containerID string) sftp.Handlers {
-	root := getRoot(containerID)
+func DockerCliSftpHandler(containerID string, config ssh2docksal.Config) sftp.Handlers {
+	root := getRoot(containerID, config)
 	return sftp.Handlers{root, root, root, root}
 }
 
@@ -49,6 +51,7 @@ func (fs *root) Fileread(r *sftp.Request) (io.ReaderAt, error) {
 }
 func (fs *root) createDockerFile(path string, isdir bool, containerID string) *dockerFile {
 	fs.files[path] = newDockerFile(path, isdir, fs.containerID)
+	fs.files[path].root = *fs
 	return fs.files[path]
 }
 func (fs *root) Filewrite(r *sftp.Request) (io.WriterAt, error) {
@@ -219,6 +222,7 @@ type root struct {
 	files       map[string]*dockerFile
 	containerID string
 	filesLock   sync.Mutex
+	config ssh2docksal.Config
 }
 
 func (fs *root) fetch(path string) (*dockerFile, error) {
@@ -252,6 +256,7 @@ type dockerFile struct {
 	contentLock sync.RWMutex
 	containerID string
 	deleted     bool
+	root 		root
 }
 
 func createNewDockerFile(lsString string, containerID string) (*dockerFile, error) {
@@ -281,6 +286,7 @@ func newDockerFile(name string, isdir bool, containerID string) *dockerFile {
 		modtime:     time.Now(),
 		isdir:       isdir,
 		containerID: containerID,
+
 	}
 }
 

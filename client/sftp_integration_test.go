@@ -6,6 +6,7 @@ package client
 import (
 	"bytes"
 	"crypto/sha1"
+	"github.com/andock/ssh2docksal"
 	"log"
 
 	"flag"
@@ -154,7 +155,8 @@ func testClientGoSvr(t testing.TB, readonly bool, delay time.Duration) (*sftp.Cl
 		options = append(options, sftp.ReadOnly())
 		containerID = getReadOnlyTestContainerId()
 	}
-	server := sftp.NewRequestServer(c1, DockerCliSftpHandler(containerID))
+	c := ssh2docksal.Config{DockerUser:"docker"}
+	server := sftp.NewRequestServer(c1, DockerCliSftpHandler(containerID, c))
 	//err := server.Serve()
 	//server, err := sftp.NewServer(c1, options...)
 	//if err != nil {

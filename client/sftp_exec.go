@@ -18,7 +18,7 @@ import (
 func (folder *dockerFile) execFileList(fs *root) ([]os.FileInfo, error) {
 	folderName := folder.name
 
-	nameString, err := outpuExec(folder.containerID, "ls -al "+folderName)
+	nameString, err := outpuExec(folder.containerID, "ls -al "+folderName, fs.config.DockerUser)
 	names := strings.Split(nameString, "\n")
 	validItems := []os.FileInfo{}
 	first := true
@@ -80,11 +80,11 @@ func (file *dockerFile) execFileDownload() error {
 }
 
 func (file *dockerFile) execFileCreate() error {
-	return simpleExec(file.containerID, fmt.Sprintf("mkdir -p '%s'; cd '%s'; touch '%s'", filepath.Dir(file.name), filepath.Dir(file.name), file.Name()) )
+	return simpleExec(file.containerID, fmt.Sprintf("mkdir -p '%s'; cd '%s'; touch '%s'", filepath.Dir(file.name), filepath.Dir(file.name), file.Name()), file.root.config.DockerUser)
 }
 
 func (fs *root) execFileInfo(fileName string) (*dockerFile, error) {
-	output, err := outpuExec(fs.containerID, fmt.Sprintf("if [ -e '%s' ]; then ls -ald '%s'; fi", fileName, fileName))
+	output, err := outpuExec(fs.containerID, fmt.Sprintf("if [ -e '%s' ]; then ls -ald '%s'; fi", fileName, fileName), fs.config.DockerUser)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +99,7 @@ func (fs *root) execFileInfo(fileName string) (*dockerFile, error) {
 }
 
 func (file *dockerFile) execFileChmod(perm string) error {
-	return simpleExec(file.containerID, fmt.Sprintf("chmod %s '%s'",string(perm), file.name))
+	return simpleExec(file.containerID, fmt.Sprintf("chmod %s '%s'",string(perm), file.name), file.root.config.DockerUser)
 }
 
 func (file *dockerFile) execRemove() error {
@@ -107,17 +107,17 @@ func (file *dockerFile) execRemove() error {
 	if file.IsDir() {
 		flag = " -r "
 	}
-	return simpleExec(file.containerID, fmt.Sprintf("rm -f %s '%s'", flag, file.name))
+	return simpleExec(file.containerID, fmt.Sprintf("rm -f %s '%s'", flag, file.name), file.root.config.DockerUser)
 }
 
 func (file *dockerFile) execFileRename(targetName string) error {
-	return simpleExec(file.containerID, fmt.Sprintf("mv '%s' '%s'",file.name,targetName))
+	return simpleExec(file.containerID, fmt.Sprintf("mv '%s' '%s'",file.name,targetName), file.root.config.DockerUser)
 }
 
 func (file *dockerFile) execTruncate(size uint64) error {
-	return simpleExec(file.containerID, fmt.Sprintf("truncate -s %s	'%s'" , strconv.FormatUint(size, 10), file.name))
+	return simpleExec(file.containerID, fmt.Sprintf("truncate -s %s	'%s'" , strconv.FormatUint(size, 10), file.name), file.root.config.DockerUser)
 }
 
 func (folder *dockerFile) execMkDir(folderName string) error {
-	return simpleExec(folder.containerID, fmt.Sprintf("mkdir -p '%s/%s'", folder.name, folderName))
+	return simpleExec(folder.containerID, fmt.Sprintf("mkdir -p '%s/%s'", folder.name, folderName), folder.root.config.DockerUser)
 }

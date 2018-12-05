@@ -11,19 +11,19 @@ import (
 	"strings"
 )
 
-func simpleExec(containerID string, command string) error {
-	_, err := outpuExec(containerID, command)
+func simpleExec(containerID string, command string, dockerUser string) error {
+	_, err := outpuExec(containerID, command, dockerUser)
 	return err
 }
 
-func outpuExec(containerID string, command string) (string, error) {
+func outpuExec(containerID string, command string, dockerUser string) (string, error) {
 	log.Debugf("SFTP: Execute command: %s", command)
 	cli, err := client.NewEnvClient()
 	args := []string{"bash", "-c", command}
 	if err != nil {
 		return "", err
 	}
-	execConfig := types.ExecConfig{Tty: false, AttachStdout: true, AttachStderr: true, Cmd: args, User: "docker"}
+	execConfig := types.ExecConfig{Tty: false, AttachStdout: true, AttachStderr: true, Cmd: args, User: dockerUser}
 	respIdExecCreate, err := cli.ContainerExecCreate(context.Background(), containerID, execConfig)
 	if err != nil {
 		return "", err

@@ -15,12 +15,13 @@ import (
 type dockerClientInterface interface {
 	Execute(containerID string, s ssh.Session, c Config)
 	Find(containerName string) (string, error)
-	SftpHandler(containerID string) sftp.Handlers
+	SftpHandler(containerID string, config Config) sftp.Handlers
 }
 
 // Config for ssh options
 type Config struct {
 	WelcomeMessage string
+	DockerUser     string
 	Cache          *cache.Cache
 }
 
@@ -88,16 +89,20 @@ func SSHHandler(sshHandler dockerClientInterface, config Config) {
 			s.Exit(1)
 			return
 		}
-
+		projectName, container := getContainerNames(s.User())
+		config.DockerUser = "root"
+		if container == "cli" {
+			config.DockerUser = "docker"
+		}
 		if s.Subsystem() == "sftp" {
 			log.Debugf("Start sftp")
-			sftpServer := sftp.NewRequestServer(s, sshHandler.SftpHandler(existingContainer))
+			sftpServer := sftp.NewRequestServer(s, sshHandler.SftpHandler(existingContainer, config))
 			_ = sftpServer.Serve()
 
 		} else {
 			_, _, isPty := s.Pty()
-			if config.WelcomeMessage != "" && isPty == true {
-				projectName, container := getContainerNames(s.User())
+			if config.WelcomeMessage != "" && isPty == true && len(s.Command()) == 0 {
+
 				message := figure.NewFigure(config.WelcomeMessage, "", true).String()
 				fmt.Fprintf(s, "\n\n%s\n\n\r", message)
 				fmt.Fprintf(s, " Welcome to %s.\n\n\r", config.WelcomeMessage)
