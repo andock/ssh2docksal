@@ -25,6 +25,20 @@
   [[ "$output" =~ "HTTP/1.1 200 OK" ]]
 }
 
+@test "drush sql-sync loop" {
+  cd ssh2docksal_source/docroot
+  for i in 1 2 3 4 5
+  do
+    run fin drush sql-drop -y
+    [ $status = 0 ]
+    run fin drush sql-sync @ssh2docksal.target @self -y
+    [ $status = 0 ]
+    run 'curl -sL -I  http://ssh2docksal-source.docksal | grep "HTTP/1.1 200 OK"'
+    [[ "$output" =~ "HTTP/1.1 200 OK" ]]
+  done
+
+}
+
 teardown() {
     echo "Status: $status"
     echo "Output:"
