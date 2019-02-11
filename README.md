@@ -51,7 +51,6 @@ docker run \
 -v /var/run/docker.sock:/var/run/docker.sock \
 -v /usr/bin/docker:/usr/bin/docker \
 --name andock-ssh2docksal \
---mount type=bind,src=${HOME}/.ssh/authorized_keys,dst=/home/docker/.ssh/authorized_keys \
 -p 192.168.64.100:2222:2222 andockio/ssh2docksal --auth-type noauth --verbose
 ```
 
@@ -67,8 +66,8 @@ docker run \
 --restart=always \
 -v /var/run/docker.sock:/var/run/docker.sock \
 -v /usr/bin/docker:/usr/bin/docker \
+-v ${HOME}/.ssh/authorized_keys:/home/docker/.ssh/authorized_keys:rw \
 --name andock-ssh2docksal \
---mount type=bind,src=${HOME}/.ssh/authorized_keys,dst=/home/docker/.ssh/authorized_keys \
 -p 0.0.0.0:2222:2222 andockio/ssh2docksal 
 ```
 

@@ -14,22 +14,26 @@ func NoAuth() ssh.Option {
 }
 
 func validatePublicKeyAuth(authorizedKeysFile string, key ssh.PublicKey) bool {
-
+	log.Debugf("Start validatePublicKeyAuth")
 	authorizedKeysBytes, err := ioutil.ReadFile(authorizedKeysFile)
 	if err != nil {
 		log.Fatalf("Failed to load authorized_keys, err: %v", err)
 		return false
 	}
 	for len(authorizedKeysBytes) > 0 {
+		log.Debugf("Bytes are > 0")
 		pubKey, _, _, rest, err := ssh.ParseAuthorizedKey(authorizedKeysBytes)
 		if err != nil {
 			log.WithError(err)
 		}
 		if ssh.KeysEqual(key, pubKey) {
 			return true
+		} else {
+			log.Debugf("Key not exists: %s", pubKey)
 		}
 		authorizedKeysBytes = rest
 	}
+	log.Debugf("Access not allowed")
 	return false
 }
 

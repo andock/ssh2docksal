@@ -50,7 +50,7 @@ func main() {
 	app := cli.NewApp()
 	app.Author = "Christian Wiedemann"
 	app.Email = "christian.wiedemann@key-tec.de"
-	app.Version = "1.0.0-rc1"
+	app.Version = "1.0.0-rc3"
 	app.Usage = "SSH to docksal"
 
 	app.Flags = []cli.Flag{
