@@ -27,7 +27,7 @@
 
 @test "drush sql-sync loop" {
   cd ssh2docksal_source/docroot
-  for i in 1 2 3 4 5
+  for i in 1 2 3 4 5 6 7 8 9
   do
     run fin drush sql-drop -y
     [ $status = 0 ]

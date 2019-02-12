@@ -21,7 +21,6 @@ func validatePublicKeyAuth(authorizedKeysFile string, key ssh.PublicKey) bool {
 		return false
 	}
 	for len(authorizedKeysBytes) > 0 {
-		log.Debugf("Bytes are > 0")
 		pubKey, _, _, rest, err := ssh.ParseAuthorizedKey(authorizedKeysBytes)
 		if err != nil {
 			log.WithError(err)
@@ -33,7 +32,7 @@ func validatePublicKeyAuth(authorizedKeysFile string, key ssh.PublicKey) bool {
 		}
 		authorizedKeysBytes = rest
 	}
-	log.Debugf("Access not allowed")
+	log.Error("Access denied")
 	return false
 }
 
